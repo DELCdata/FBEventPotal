@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<!--
+  DELC Food & Beverage 2026 Portal — GitHub Pages + Supabase edition
+  Set SUPABASE_URL and SUPABASE_ANON_KEY below (near the top of the main <script> tag)
+  before deploying. See the setup guide for step-by-step instructions.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DELC Food &amp; Beverage 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Lato',sans-serif;background:#f5ede0;color:#1a1a1a;min-height:100vh}
+:root{
+  --navy:#1a3355;--navyD:#122440;--gold:#c9973a;--cream:#fdf8f2;
+  --sand:#f5ede0;--border:#e4d8c8;--muted:#7a6a55;--green:#1a6e3c;--red:#b91c1c;
+}
+.btn{font-family:inherit;border-radius:8px;padding:7px 14px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-weight:700;border:1px solid var(--border);background:#fff;color:#1a1a1a;transition:opacity .15s}
+.btn:hover{opacity:.8}
+.btn-primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn-gold{background:var(--gold);color:#fff;border-color:var(--gold)}
+.btn-danger{background:#fee2e2;color:var(--red);border-color:#fca5a5}
+.btn-green{background:#dcfce7;color:var(--green);border-color:#86efac}
+.btn-warn{background:#fffbeb;color:#b45309;border-color:#fcd34d}
+.inp{border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:13px;background:#fff;color:#1a1a1a;font-family:inherit;width:100%;outline:none}
+.inp:focus{border-color:var(--gold)}
+.lbl{font-size:11px;color:var(--muted);margin-bottom:4px;display:block;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+#login-screen{min-height:100vh;background:linear-gradient(rgba(18,36,64,.86),rgba(18,36,64,.93)),url('https://storage1.snappages.site/GKKB9P/assets/images/22750931_1920x1080_500.png') center/cover no-repeat;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:rgba(255,255,255,.97);border-radius:20px;padding:36px;box-shadow:0 24px 60px rgba(0,0,0,.4);width:100%;max-width:420px}
+.login-divider{height:3px;background:linear-gradient(90deg,var(--navy),var(--gold));border-radius:2px;width:60px;margin:0 auto 14px}
+.login-title{font-size:20px;font-weight:900;color:var(--navy);text-align:center;letter-spacing:-.5px;margin-bottom:4px}
+.login-sub{font-size:12px;color:var(--muted);text-align:center;margin-bottom:24px}
+.login-error{background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:9px 12px;font-size:12px;color:var(--red);margin-bottom:14px;font-weight:700}
+.shake{animation:shk .4s ease}
+
+@keyframes shk{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+#app-screen{display:none;flex-direction:column;min-height:100vh}
+.top-nav{background:var(--navy);padding:0 16px;display:flex;align-items:center;gap:8px;min-height:54px;flex-wrap:wrap}
+.top-nav img{height:34px;width:auto;object-fit:contain;flex-shrink:0}
+.nav-div{width:1px;height:26px;background:rgba(255,255,255,.2);flex-shrink:0}
+.nav-title{flex:1;color:#fff;font-size:14px;font-weight:700;min-width:0}
+.nav-sub{font-size:11px;color:rgba(255,255,255,.45);margin-right:4px}
+.nav-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:11px;padding:5px 10px}
+.save-chip{font-size:11px;display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;background:var(--cream);font-weight:700}
+.hero{background:linear-gradient(135deg,var(--navy),var(--navyD));padding:18px 20px 0;position:relative;overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:url('https://storage1.snappages.site/GKKB9P/assets/images/22750931_1920x1080_500.png') center/cover;opacity:.07;pointer-events:none}
+.hero-label{color:rgba(255,255,255,.6);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px}
+.hero-title{color:#fff;font-size:21px;font-weight:900;letter-spacing:-.4px;margin-bottom:14px}
+.tab-bar{display:flex;overflow-x:auto}
+.tab{background:transparent;border:none;border-bottom:3px solid transparent;color:rgba(255,255,255,.5);padding:8px 16px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap}
+.tab.active{color:#fff;border-bottom-color:var(--gold);background:rgba(255,255,255,.13)}
+.sub-tab-bar{display:flex;border-bottom:2px solid var(--border);margin-bottom:16px;overflow-x:auto}
+.sub-tab{background:none;border:none;border-bottom:3px solid transparent;padding:7px 14px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:700;color:var(--muted);margin-bottom:-2px;white-space:nowrap}
+.sub-tab.active{color:var(--navy);border-bottom-color:var(--gold)}
+.content{padding:18px 20px 40px;flex:1}
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:18px}
+.metric{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;text-align:center}
+.metric-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:4px}
+.metric-val{font-size:20px;font-weight:900;letter-spacing:-.5px}
+.event-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.event-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;border-top-width:3px}
+.type-pill{display:inline-block;font-size:10px;padding:2px 9px;border-radius:20px;font-weight:700;letter-spacing:.03em;margin-bottom:6px;margin-right:5px}
+.ec-stats{display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px;margin:8px 0 10px}
+.ec-stat-label{color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase}
+.ec-stat-val{font-weight:700}
+.ec-actions{display:flex;gap:5px;border-top:1px solid var(--sand);padding-top:8px}
+.ec-actions .btn{flex:1;justify-content:center;font-size:11px;padding:4px 6px}
+
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;font-size:10px;font-weight:700;color:var(--muted);padding:5px 8px;border-bottom:2px solid var(--border);text-transform:uppercase;letter-spacing:.04em}
+th.r{text-align:right}
+td{padding:6px 8px;border-bottom:1px solid var(--sand)}
+td.r{text-align:right}
+tr:hover td{background:var(--cream);cursor:pointer}
+.backdrop{position:fixed;inset:0;background:rgba(18,36,64,.58);display:flex;align-items:flex-start;justify-content:center;z-index:100;overflow-y:auto;padding:20px 16px}
+.modal{background:#fff;border-radius:16px;border:1px solid var(--border);width:100%;max-width:680px;padding:20px 22px}
+.modal-sm{max-width:400px;text-align:center}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:14px;border-bottom:3px solid var(--gold)}
+.modal-eyebrow{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.modal-title{font-size:18px;font-weight:900;color:var(--navy);margin:0;letter-spacing:-.3px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.form-2col{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-top:18px;margin-bottom:8px;padding-top:14px;border-top:1px solid var(--border)}
+.section-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.prow{display:grid;grid-template-columns:1fr 1fr 80px 2fr 80px 55px 22px;gap:5px;align-items:center;margin-bottom:5px}
+.vrow{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 1fr 22px;gap:6px;align-items:center;margin-bottom:7px}
+.offer-row{display:flex;align-items:center;gap:8px}
+.offer-label{font-size:11px;color:var(--muted);font-weight:700;width:60px;flex-shrink:0}
+.detail-block{background:var(--cream);border-radius:10px;padding:14px 16px;border:1px solid var(--border)}
+.detail-block-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.detail-row{display:flex;justify-content:space-between;font-size:12px;padding:2px 0}
+.detail-row span{color:var(--muted)}
+.detail-row strong{color:#1a1a1a}
+.detail-row.sep{border-top:1px solid var(--border);margin-top:4px;padding-top:5px}
+.backup-item{background:var(--cream);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.drop-zone{border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;color:var(--muted);font-size:13px;font-weight:700;transition:all .15s;margin-bottom:14px}
+.drop-zone.over{border-color:var(--gold);background:#fef9ec;color:var(--gold)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;border-radius:24px;padding:9px 20px;font-size:13px;z-index:300;white-space:nowrap;opacity:0;transition:opacity .3s;font-weight:700;pointer-events:none}
+#print-overlay{display:none;position:fixed;inset:0;background:#fff;z-index:9999;overflow:auto;padding:.5in}
+
+@media print{body>*{display:none!important}#print-overlay{display:block!important;position:static!important;padding:.3in}}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-box" id="login-box">
+    <div class="login-divider"></div>
+    <div class="login-title">Food &amp; Beverage Portal</div>
+    <div class="login-sub">Service &amp; Hospitality Team &middot; 2026</div>
+    <div id="login-error" class="login-error" style="display:none"></div>
+    <div style="margin-bottom:14px">
+      <label class="lbl">Username</label>
+      <input class="inp" id="login-user" placeholder="e.g. ddetrich" autocomplete="username">
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">First initial + last name, no spaces</div>
+    </div>
+    <div style="margin-bottom:20px">
+      <label class="lbl">Password</label>
+      <input class="inp" id="login-pass" type="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" style="width:100%;padding:13px;font-size:15px;justify-content:center;border-radius:10px" onclick="doLogin()">Sign In &rarr;</button>
+    <div style="text-align:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <a href="https://mydelc.org" target="_blank" style="font-size:11px;color:var(--muted);text-decoration:none">mydelc.org</a>
+    </div>
+  </div>
+</div>
+
+<div id="app-screen" style="display:none;flex-direction:column;min-height:100vh">
+  <div class="top-nav" id="top-nav">
+    <div class="nav-div"></div>
+    <div id="nav-back-area"></div>
+    <div class="nav-title"><span id="nav-sub" class="nav-sub"></span><span id="nav-title-text">Food &amp; Beverage 2026</span></div>
+
+    <span class="save-chip" id="save-chip" style="color:#aaa;border:1px solid #aaa4">&#9729; Auto-save on</span>
+    <button class="btn nav-btn" id="nav-data-btn" onclick="openData()">&#128196; Data</button>
+    <button class="btn btn-gold" id="nav-new-btn" onclick="openNewEvent()" style="font-size:12px;padding:6px 14px">&#43; New event</button>
+    <button class="btn nav-btn" id="nav-edit-btn" onclick="openEdit(currentEventId)" style="display:none">&#9998; Edit</button>
+    <button class="btn btn-gold" id="nav-print-btn" onclick="printReport(currentEventId)" style="display:none;font-size:11px;padding:5px 10px">&#128438; Print Report</button>
+    <button class="btn btn-danger" id="nav-del-btn" onclick="askDelete(currentEventId)" style="display:none;font-size:11px;padding:5px 10px">&#128465; Delete</button>
+    <span id="nav-user" style="font-size:11px;color:rgba(255,255,255,.5);border-left:1px solid rgba(255,255,255,.18);padding-left:10px"></span>
+    <button class="btn" style="background:none;border:none;color:rgba(255,255,255,.45);font-size:11px;padding:4px" onclick="doLogout()">Sign out</button>
+  </div>
+
+  <div id="view-dash">
+    <div class="hero">
+      <div class="hero-bg"></div>
+      <div style="position:relative">
+        <div class="hero-label">Service &amp; Hospitality Team</div>
+        <div class="hero-title">2026 Event Dashboard</div>
+        <div class="tab-bar">
+          <button class="tab active" id="tab-overview" onclick="setTab('overview')">Overview</button>
+          <button class="tab" id="tab-events" onclick="setTab('events')">Events</button>
+          <button class="tab" id="tab-charts" onclick="setTab('charts')">Charts</button>
+        </div>
+      </div>
+    </div>
+    <div class="content">
+      <div id="panel-overview"></div>
+      <div id="panel-events" style="display:none"></div>
+      <div id="panel-charts" style="display:none"></div>
+    </div>
+  </div>
+
+  <div id="view-detail" style="display:none">
+    <div class="content" style="padding-top:16px">
+
+      <div id="detail-meta" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+      <div class="sub-tab-bar">
+        <button class="sub-tab active" id="stab-summary" onclick="setDetailTab('summary')">Summary</button>
+        <button class="sub-tab" id="stab-purchases" onclick="setDetailTab('purchases')">Purchases</button>
+        <button class="sub-tab" id="stab-offering" onclick="setDetailTab('offering')">Offering count</button>
+        <button class="sub-tab" id="stab-schedule" onclick="setDetailTab('schedule')">Schedule</button>
+      </div>
+      <div id="detail-content"></div>
+    </div>
+  </div>
+</div>
+
+<div class="backdrop" id="form-modal" style="display:none">
+  <div class="modal" id="form-inner"></div>
+</div>
+<div class="backdrop" id="data-modal" style="display:none">
+  <div class="modal" id="data-inner" style="max-width:580px"></div>
+</div>
+<div class="backdrop" id="confirm-modal" style="display:none">
+  <div class="modal modal-sm" id="confirm-inner" style="max-width:380px;padding:28px;text-align:center"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="print-overlay"></div>
+<input type="file" id="file-input" accept=".json" style="display:none" onchange="handleImport(this)">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+/* ====== Supabase configuration — fill these in from your Supabase project ======
+   Project Settings -> API -> Project URL, and Project API keys -> anon public
+   ================================================================================ */
+const SUPABASE_URL = "https://ksdxhqyusaylfpyeecbv.supabase.co";       // e.g. https://abcdefghijk.supabase.co
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzZHhocXl1c2F5bGZweWVlY2J2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1NTE1NDgsImV4cCI6MjEwNDEyNzU0OH0.6HI0XWmlIfzyVy0iRH2GkAVNqYIZQwMeNhr4drTOUNo";     // the long anon/public key
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_CONFIGURED = !SUPABASE_URL.includes("YOUR_SUPABASE") && !SUPABASE_ANON_KEY.includes("YOUR_SUPABASE");
+</script>
+<script>
+const PASS="Delc.1200!";
+const C={navy:"#1a3355",gold:"#c9973a",cream:"#fdf8f2",sand:"#f5ede0",border:"#e4d8c8",muted:"#7a6a55",green:"#1a6e3c",red:"#b91c1c"};
+const typeColor=t=>({Mug:C.green,Dinner:C.navy,Craft:C.gold,"Craft Event":C.gold,Luncheon:"#7e3a8a",Breakfast:"#c05c1a",Funeral:"#4b4b4b",Other:C.muted}[t]||C.muted);
+const typeBg=t=>({Mug:"#e6f4ed",Dinner:"#e8eef7",Craft:"#fef3e2","Craft Event":"#fef3e2",Luncheon:"#f5eaf8",Breakfast:"#fdf0e8",Funeral:"#ececec",Other:"#f2ede8"}[t]||"#f2ede8");
+const statusColor=s=>({Scheduled:C.navy,Planning:"#7e3a8a",Pending:"#c05c1a",Completed:C.green}[s]||C.muted);
+const statusBg=s=>({Scheduled:"#e8eef7",Planning:"#f5eaf8",Pending:"#fdf0e8",Completed:"#e6f4ed"}[s]||"#f2ede8");
+const statusPill=s=>s?`<span class="type-pill" style="background:${statusBg(s)};color:${statusColor(s)}">${s}</span>`:"";
+
+const fD=d=>{if(!d)return"—";const dt=new Date(d+"T12:00:00");return dt.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});};
+const fC=v=>v==null?"—":"$"+Math.abs(+v).toFixed(2);
+const fCS=v=>{if(v==null)return"—";return(v<0?"-$":"$")+Math.abs(+v).toFixed(2);};
+const tA=e=>(e.attendance.adults||0)+(e.attendance.children||0)+(e.attendance.kidsMeals||0);
+const gMs=e=>{try{return new Date(e.date+"T12:00:00").getTime();}catch{return 0;}};
+const calcCost=ev=>(ev.purchases||[]).reduce((s,p)=>s+(+p.debit||0)-(+p.credit||0),0);
+const offerTotal=o=>{if(!o)return 0;return(o.hundreds||0)*100+(o.fifties||0)*50+(o.twenties||0)*20+(o.tens||0)*10+(o.fives||0)*5+(o.ones||0)*1+(+o.coin||0)+(+o.checks||0)+(+o.online||0)+(+o.square||0);};
+const emptyOffer=()=>({hundreds:0,fifties:0,twenties:0,tens:0,fives:0,ones:0,coin:0,checks:0,online:0,square:0});
+const emptyEvent=()=>({id:Date.now(),name:"",date:new Date().toISOString().split("T")[0],type:"Mug",status:"Scheduled",menu:"",attendance:{adults:0,children:0,kidsMeals:0},financials:{totalCost:0,totalOffering:0,totalIncome:0},purchases:[],offering:emptyOffer(),volunteers:[]});
+const fmtSz=s=>{const b=new Blob([s]).size;return b<1024?b+"B":b<1048576?(b/1024).toFixed(1)+"KB":(b/1048576).toFixed(1)+"MB";};
+
+const SEED=[
+  {id:1,name:"January Mug",date:"2026-01-09",type:"Mug",menu:"Breakfast Casserole - Bacon and Sausage with Fresh Fruit Salad",attendance:{adults:62,children:0,kidsMeals:0},financials:{totalCost:176.71,totalOffering:263,totalIncome:86.29},purchases:[{vendor:"",purchasedBy:"",description:"January Mug supplies",debit:176.71,credit:0}],offering:emptyOffer(),volunteers:[],status:"Completed"},
+  {id:2,name:"Make & Bake",date:"2026-01-23",type:"Dinner",menu:"",attendance:{adults:74,children:0,kidsMeals:0},financials:{totalCost:267.10,totalOffering:184,totalIncome:-83.10},purchases:[{vendor:"",purchasedBy:"",description:"Make & Bake supplies",debit:267.10,credit:0}],offering:emptyOffer(),volunteers:[],status:"Completed"},
+  {id:3,name:"February Mug",date:"2026-02-06",type:"Mug",menu:"",attendance:{adults:52,children:0,kidsMeals:0},financials:{totalCost:291.92,totalOffering:184,totalIncome:-107.92},purchases:[{vendor:"",purchasedBy:"",description:"February Mug supplies",debit:291.92,credit:0}],offering:emptyOffer(),volunteers:[],status:"Completed"},
+  {id:4,name:"Fat Tuesday",date:"2026-02-08",type:"Dinner",menu:"",attendance:{adults:111,children:0,kidsMeals:0},financials:{totalCost:291.17,totalOffering:421,totalIncome:129.83},purchases:[{vendor:"",purchasedBy:"",description:"Fat Tuesday supplies",debit:291.17,credit:0}],offering:emptyOffer(),volunteers:[],status:"Completed"},
+  {id:5,name:"Carol Brown Funeral",date:"2026-02-12",type:"Dinner",menu:"",attendance:{adults:29,children:0,kidsMeals:0},financials:{totalCost:150.15,totalOffering:100,totalIncome:-50.15},purchases:[{vendor:"",purchasedBy:"",description:"Funeral reception supplies",debit:150.15,credit:0}],offering:emptyOffer(),volunteers:[],status:"Completed"},
+  {id:6,name:"Lent Dinner #1",date:"2026-02-16",type:"Dinner",menu:"",attendance:{adults:70,children:0,kidsMeals:0},financials:{totalCost:396.78,totalOffering:342,totalIncome:-54.78},purchases:[{vendor:"",purchasedBy:"",description:"Lent Dinner #1 supplies",debit:396.78,credit:0}],offering:emptyOffer(),volunteers:[],status:"Completed"},
+  {id:7,name:"Lent Dinner #2",date:"2026-02-23",type:"Dinner",menu:"",attendance:{adults:85,children:0,kidsMeals:0},financials:{totalCost:200.87,totalOffering:466,totalIncome:265.13},purchases:[{vendor:"",purchasedBy:"",description:"Lent Dinner #2 supplies",debit:200.87,credit:0}],offering:emptyOffer(),volunteers:[],status:"Completed"},
+  {id:8,name:"Lent Dinner #3",date:"2026-03-02",type:"Dinner",menu:"",attendance:{adults:87,children:0,kidsMeals:0},financials:{totalCost:239.29,totalOffering:386,totalIncome:146.71},purchases:[{vendor:"",purchasedBy:"",description:"Lent Dinner #3 supplies",debit:239.29,credit:0}],offering:emptyOffer(),volunteers:[],status:"Completed"},
+  {id:9,name:"March Mug",date:"2026-03-06",type:"Mug",menu:"",attendance:{adults:59,children:0,kidsMeals:0},financials:{totalCost:156.01,totalOffering:165,totalIncome:8.99},purchases:[{vendor:"",purchasedBy:"",description:"March Mug supplies",debit:156.01,credit:0}],offering:emptyOffer(),volunteers:[],status:"Completed"},
+  {id:10,name:"Easter Craft",date:"2026-03-09",type:"Craft",menu:"",attendance:{adults:21,children:0,kidsMeals:0},financials:{totalCost:440.04,totalOffering:564,totalIncome:123.96},purchases:[{vendor:"WallCutz",purchasedBy:"Derek",description:"12 full kits Arch & Bunny, 3 Full kits, 7 Cross only",debit:440.04,credit:0}],offering:emptyOffer(),volunteers:[],status:"Completed"},
+  {id:11,name:"Lent Dinner #4",date:"2026-03-09",type:"Dinner",menu:"",attendance:{adults:84,children:0,kidsMeals:0},financials:{totalCost:451.15,totalOffering:619,totalIncome:167.85},purchases:[{vendor:"",purchasedBy:"",description:"Lent Dinner #4 supplies",debit:451.15,credit:0}],offering:emptyOffer(),volunteers:[],status:"Completed"},
+  {id:12,name:"Lent Dinner #5",date:"2026-03-16",type:"Dinner",menu:"Turkey dinner",attendance:{adults:80,children:0,kidsMeals:0},financials:{totalCost:394.72,totalOffering:379,totalIncome:-15.72},purchases:[{vendor:"Imlers",purchasedBy:"Stephanie",description:"4 Turkeys",debit:206.76,credit:0},{vendor:"Sams",purchasedBy:"Chris",description:"Cheese, napkins, onions, celery, broth, bread",debit:143.93,credit:68.18},{vendor:"WS Lee",purchasedBy:"Chris",description:"Green Beans, celery, yams",debit:84.89,credit:0},{vendor:"Sams",purchasedBy:"Chris",description:"Butter, FF onions",debit:27.32,credit:0}],offering:emptyOffer(),volunteers:[],status:"Completed"},
+  {id:13,name:"Easter Morning",date:"2026-04-05",type:"Breakfast",menu:"Apple Turnovers, Granola, Cinnamon Rolls, Yogurt, French Toast Sticks",attendance:{adults:0,children:0,kidsMeals:0},financials:{totalCost:100.77,totalOffering:0,totalIncome:-100.77},purchases:[{vendor:"Walmart",purchasedBy:"Derek",description:"Apple Turnovers, Granola, Cinnamon Rolls, Yogurt, French Toast Sticks",debit:160.75,credit:59.98}],offering:emptyOffer(),volunteers:[],status:"Completed"},
+  {id:14,name:"Maundy Thursday",date:"2026-04-02",type:"Dinner",menu:"Roast Beef, Au Gratin Potatoes, Green Bean Casserole, Stuffing, Gravy, Fruit Salad",attendance:{adults:70,children:0,kidsMeals:0},financials:{totalCost:260.42,totalOffering:476,totalIncome:215.58},purchases:[{vendor:"Sams",purchasedBy:"Chris",description:"Cheese, Eggs, Butter, Fruit, Beef Broth, Potatoes",debit:152.09,credit:0},{vendor:"Walmart",purchasedBy:"Chris",description:"Green Beans, Celery, HV Ranch, Zesty Italian",debit:48.51,credit:0},{vendor:"Walmart",purchasedBy:"Chris",description:"Poultry seasoning, cheese, milk, misc",debit:226.48,credit:166.66}],offering:emptyOffer(),volunteers:[],status:"Completed"},
+  {id:15,name:"April Mug",date:"2026-04-12",type:"Mug",menu:"Pizza casserole, cookies",attendance:{adults:57,children:0,kidsMeals:0},financials:{totalCost:91.16,totalOffering:186,totalIncome:94.84},purchases:[{vendor:"Walmart",purchasedBy:"Stephanie",description:"Italian seasoning, hamburg, sausage",debit:38.85,credit:0},{vendor:"Martins",purchasedBy:"Stephanie",description:"Reddi Whip, Milk, Cookies, GF pasta, sauce & pepperoni",debit:58.31,credit:6.00}],offering:emptyOffer(),volunteers:[],status:"Completed"},
+  {id:16,name:"April Craft",date:"2026-04-19",type:"Craft",menu:"",attendance:{adults:25,children:0,kidsMeals:0},financials:{totalCost:497.79,totalOffering:668,totalIncome:170.21},purchases:[{vendor:"WallCutz",purchasedBy:"Stephanie",description:"14 full kits Spring Garden & 11 Front only",debit:497.79,credit:0}],offering:emptyOffer(),volunteers:[],status:"Completed"},
+  {id:17,name:"Preacher Appreciation",date:"2026-05-03",type:"Luncheon",menu:"Bourbon Sauce, Egg Roll, Fried Mac & Cheese Bites, Cookies, Buffalo Dip, Artichoke Dip, Pies",attendance:{adults:13,children:0,kidsMeals:0},financials:{totalCost:337.75,totalOffering:350.37,totalIncome:12.62},purchases:[{vendor:"WS Lee",purchasedBy:"Chris",description:"Bourbon Sauce, Egg Roll, Fried Mac & Cheese Bites",debit:146.36,credit:0},{vendor:"Sams",purchasedBy:"Chris",description:"Cookies, Buffalo Dip, Artichoke Dip, Pies",debit:142.13,credit:8.98},{vendor:"Sams",purchasedBy:"Chris",description:"Pies and Dip",debit:58.24,credit:0}],offering:emptyOffer(),volunteers:[],status:"Completed"},
+  {id:18,name:"Vendor Craft Show",date:"2026-05-02",type:"Other",menu:"",attendance:{adults:0,children:0,kidsMeals:0},financials:{totalCost:10.70,totalOffering:165,totalIncome:154.30},purchases:[{vendor:"Sams",purchasedBy:"Stephanie",description:"Milk",debit:10.70,credit:0}],offering:emptyOffer(),volunteers:[],status:"Completed"},
+  {id:19,name:"Plant Swap & Yard Sale",date:"2026-05-17",type:"Mug",menu:"Pulled Pork, Hot Dogs and MUG",attendance:{adults:0,children:0,kidsMeals:0},financials:{totalCost:0,totalOffering:258,totalIncome:258},purchases:[],offering:emptyOffer(),volunteers:[],status:"Completed"},
+  {id:20,name:"May Mug",date:"2026-05-24",type:"Mug",menu:"Strawberry & blueberry pecan salad with grilled chicken and poppyseed dressing",attendance:{adults:76,children:0,kidsMeals:0},financials:{totalCost:197.13,totalOffering:200,totalIncome:2.87},purchases:[{vendor:"Sams",purchasedBy:"",description:"Chicken, cheesecake, bacon, craisins, spring mix, blueberries",debit:194.05,credit:39.36},{vendor:"Walmart",purchasedBy:"",description:"Strawberries, pecan cranberries, poppyseed dressing",debit:42.44,credit:0}],offering:emptyOffer(),volunteers:[],status:"Completed"},
+
+  {id:21,name:"May Craft",date:"2026-06-01",type:"Craft",menu:"",attendance:{adults:21,children:0,kidsMeals:0},financials:{totalCost:339.93,totalOffering:468,totalIncome:128.07},purchases:[{vendor:"WallCutz",purchasedBy:"Stephanie",description:"4 full kits 4th of July & 17 Front only",debit:339.93,credit:0}],offering:emptyOffer(),volunteers:[],status:"Completed"},
+];
+
+let events=[],backups=[],currentUsername="",currentEventId=null,activeTab="overview",activeDetailTab="summary",editingEvent=null;
+
+function eventToRow(e){
+  return {
+    id:e.id, name:e.name, date:e.date, type:e.type, status:e.status||"Scheduled", menu:e.menu||null,
+    attendance:e.attendance||{adults:0,children:0,kidsMeals:0},
+    financials:e.financials||{totalCost:0,totalOffering:0,totalIncome:0},
+    purchases:e.purchases||[], offering:e.offering||emptyOffer(), volunteers:e.volunteers||[]
+  };
+}
+function rowToEvent(r){
+  return {
+    id:r.id, name:r.name, date:r.date, type:r.type, status:r.status||"Scheduled", menu:r.menu||"",
+    attendance:r.attendance||{adults:0,children:0,kidsMeals:0},
+    financials:r.financials||{totalCost:0,totalOffering:0,totalIncome:0},
+    purchases:r.purchases||[], offering:r.offering||emptyOffer(), volunteers:r.volunteers||[]
+  };
+}
+
+async function loadBackupsOnly(){
+  try{
+    const {data,error}=await sb.from('backups').select('*').order('created_at',{ascending:false}).limit(10);
+    if(error)throw error;
+    backups=(data||[]).map(r=>({
+      dbId:r.id,
+      name:r.name,
+      date:new Date(r.created_at).toLocaleString("en-US",{month:"short",day:"numeric",year:"numeric",hour:"2-digit",minute:"2-digit"}),
+      eventCount:r.event_count,
+      size:r.size_label,
+      payload:JSON.stringify(r.payload)
+    }));
+  }catch(err){console.error("loadBackupsOnly",err);backups=[];}
+}
+
+async function loadAll(){
+  if(!SUPABASE_CONFIGURED){
+    showConfigError();
+    events=JSON.parse(JSON.stringify(SEED));backups=[];
+    return;
+  }
+  try{
+    const {data,error}=await sb.from('events').select('*').order('date',{ascending:true});
+    if(error)throw error;
+    if(data&&data.length){
+      events=data.map(rowToEvent);
+    }else{
+      events=JSON.parse(JSON.stringify(SEED));
+      await saveAll();
+    }
+  }catch(err){
+    console.error("loadAll",err);
+    events=JSON.parse(JSON.stringify(SEED));
+    setSaveStatus("error");
+  }
+  await loadBackupsOnly();
+}
+
+async function saveAll(){
+  setSaveStatus("saving");
+  try{
+    if(events.length){
+      const {error:upErr}=await sb.from('events').upsert(events.map(eventToRow));
+      if(upErr)throw upErr;
+    }
+    const {data:existingRows,error:selErr}=await sb.from('events').select('id');
+    if(selErr)throw selErr;
+    const localIds=new Set(events.map(e=>e.id));
+    const toDelete=(existingRows||[]).map(r=>r.id).filter(id=>!localIds.has(id));
+    if(toDelete.length){
+      const {error:delErr}=await sb.from('events').delete().in('id',toDelete);
+      if(delErr)throw delErr;
+    }
+    setSaveStatus("saved");setTimeout(()=>setSaveStatus("idle"),2000);
+  }catch(err){
+    console.error("saveAll",err);
+    setSaveStatus("error");
+  }
+}
+
+function showConfigError(){
+  const err=document.getElementById("login-error");
+  if(!err)return;
+  err.innerHTML="Supabase isn't configured yet — edit this file and set <strong>SUPABASE_URL</strong> and <strong>SUPABASE_ANON_KEY</strong> near the top of the &lt;script&gt; tag.";
+  err.style.display="block";
+}
+
+function setSaveStatus(s){
+  const el=document.getElementById("save-chip");if(!el)return;
+  const m={idle:["#aaa","&#9729; Auto-save on"],saving:["#d97706","&#8593; Saving…"],saved:[C.green,"&#10003; Saved"],error:[C.red,"&#10005; Error"]};
+  const cfg=m[s]||m.idle;el.style.color=cfg[0];el.style.borderColor=cfg[0]+"44";el.innerHTML=cfg[1];
+}
+
+let toastTimer=null;
+function showToast(msg,type){
+  const el=document.getElementById("toast");el.textContent=(type==="err"?"✕ ":"✓ ")+msg;el.style.opacity="1";
+  if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>{el.style.opacity="0";},2600);
+}
+
+
+document.getElementById("login-pass").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
+document.getElementById("login-user").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
+
+function doLogin(){
+  const u=document.getElementById("login-user").value.trim().toLowerCase();
+  const p=document.getElementById("login-pass").value;
+  const err=document.getElementById("login-error");
+  const box=document.getElementById("login-box");
+  if(!u){err.textContent="Please enter your username (e.g. ddetrich)";err.style.display="block";return;}
+  if(p!==PASS){err.textContent="Incorrect password. Please try again.";err.style.display="block";box.classList.add("shake");setTimeout(()=>box.classList.remove("shake"),500);return;}
+  currentUsername=u;
+  document.getElementById("login-screen").style.display="none";
+  document.getElementById("app-screen").style.display="flex";
+  document.getElementById("nav-user").textContent=u;
+  setTab("overview");
+}
+
+function doLogout(){
+  document.getElementById("login-screen").style.display="flex";
+  document.getElementById("app-screen").style.display="none";
+  document.getElementById("login-pass").value="";
+  document.getElementById("login-error").style.display="none";
+}
+
+function setTab(t){
+  activeTab=t;
+  ["overview","events","charts"].forEach(x=>{
+    document.getElementById("tab-"+x).classList.toggle("active",x===t);
+    document.getElementById("panel-"+x).style.display=x===t?"block":"none";
+  });
+  document.getElementById("tab-events").textContent="Events ("+events.length+")";
+  if(t==="overview")renderOverview();else if(t==="events")renderEvents();else renderCharts();
+
+}
+
+function showDash(){
+  currentEventId=null;
+  document.getElementById("view-dash").style.display="block";
+  document.getElementById("view-detail").style.display="none";
+  document.getElementById("nav-back-area").innerHTML="";
+  document.getElementById("nav-sub").textContent="";
+  document.getElementById("nav-title-text").textContent="Food & Beverage 2026";
+  document.getElementById("nav-data-btn").style.display="";
+  document.getElementById("nav-new-btn").style.display="";
+  document.getElementById("nav-edit-btn").style.display="none";
+  document.getElementById("nav-print-btn").style.display="none";
+  document.getElementById("nav-del-btn").style.display="none";
+  setTab(activeTab);
+}
+
+function showDetail(id){
+  currentEventId=id;
+  const e=events.find(x=>x.id===id);if(!e)return;
+  document.getElementById("view-dash").style.display="none";
+  document.getElementById("view-detail").style.display="block";
+  document.getElementById("nav-back-area").innerHTML='<button class="btn nav-btn" onclick="showDash()" style="font-size:11px;padding:5px 10px">&#8592; Back</button>';
+  document.getElementById("nav-sub").textContent="F&B 2026 / ";
+  document.getElementById("nav-title-text").textContent=e.name;
+  document.getElementById("nav-data-btn").style.display="none";
+  document.getElementById("nav-new-btn").style.display="none";
+  document.getElementById("nav-edit-btn").style.display="";
+  document.getElementById("nav-print-btn").style.display="";
+  document.getElementById("nav-del-btn").style.display="";
+  activeDetailTab="summary";renderDetail(e);
+}
+
+
+function setDetailTab(t){
+  activeDetailTab=t;
+  ["summary","purchases","offering","schedule"].forEach(x=>document.getElementById("stab-"+x).classList.toggle("active",x===t));
+  const e=events.find(x=>x.id===currentEventId);if(e)renderDetailContent(e);
+}
+
+let ovStatus="All",ovSearch="";
+function setOvStatus(s){ovStatus=s;renderOverview();}
+function renderOverview(){
+  const tc=events.reduce((s,e)=>s+e.financials.totalCost,0);
+  const to=events.reduce((s,e)=>s+e.financials.totalOffering,0);
+  const ti=events.reduce((s,e)=>s+e.financials.totalIncome,0);
+  const ta=events.reduce((s,e)=>s+tA(e),0);
+  const wA=events.filter(e=>tA(e)>0);
+  const avg=wA.length?Math.round(wA.reduce((s,e)=>s+tA(e),0)/wA.length):0;
+  const neg=events.filter(e=>e.financials.totalIncome<0).length;
+  const pos=events.filter(e=>e.financials.totalIncome>=0).length;
+  const ic=ti>=0?C.green:C.red;
+  const cP=ta>0?"$"+(tc/ta).toFixed(2):"—";
+  const stats=[["Events",events.length,C.navy],["Attendance",ta.toLocaleString(),C.navy],["Avg attend.",avg,C.navy],["Total cost",fC(tc),C.navy],["Cost/person",cP,C.navy],["Total offering",fC(to),C.navy],["Net income",fCS(ti),ic],["Profitable",pos,C.green],["Over budget",neg,C.red]];
+
+  const STATUSES=["Scheduled","Planning","Pending","Completed"];
+  const buckets=[["All",events.length,C.navy]].concat(STATUSES.map(s=>[s,events.filter(e=>(e.status||"Scheduled")===s).length,statusColor(s)]));
+  const bucketCards=buckets.map(([label,count,color])=>`
+    <div onclick="setOvStatus('${label}')" style="cursor:pointer;flex:1;min-width:100px;background:${label===ovStatus?color:"var(--cream)"};color:${label===ovStatus?"#fff":color};border:1px solid ${color};border-radius:10px;padding:10px 12px;text-align:center;transition:background .1s">
+      <div style="font-weight:900;font-size:20px;letter-spacing:-.5px">${count}</div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em">${label}</div>
+    </div>`).join("");
+
+  const isFiltered=ovStatus!=="All"||!!ovSearch;
+  const matched=events.filter(e=>{
+    const sm=ovStatus==="All"||(e.status||"Scheduled")===ovStatus;
+    const qm=!ovSearch||e.name.toLowerCase().includes(ovSearch.toLowerCase());
+    return sm&&qm;
+  }).sort((a,b)=>gMs(b)-gMs(a));
+  const sorted=isFiltered?matched:matched.slice(0,10);
+  let rows=sorted.map(e=>{const c=e.financials.totalIncome>=0?C.green:C.red;return`<tr onclick="showDetail(${e.id})"><td>${e.name}</td><td style="color:var(--muted);font-size:11px">${fD(e.date)}</td><td>${typePill(e.type)}</td><td>${statusPill(e.status||"Scheduled")}</td><td class="r">${tA(e)||"—"}</td><td class="r">${fC(e.financials.totalCost)}</td><td class="r" style="font-weight:700;color:${c}">${fCS(e.financials.totalIncome)}</td></tr>`;}).join("");
+  const tableTitle=isFiltered?`${matched.length} event${matched.length===1?"":"s"} matching`:"Recent events";
+  document.getElementById("panel-overview").innerHTML=`
+    <div class="metric-grid">${stats.map(s=>`<div class="metric" style="border-top:3px solid ${s[2]}"><div class="metric-label">${s[0]}</div><div class="metric-val" style="color:${s[2]}">${s[1]}</div></div>`).join("")}</div>
+    <div class="card" style="margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Events by status &middot; click to view</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${bucketCards}</div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">${tableTitle}</div>
+        <input class="inp" style="width:220px" placeholder="Search events…" value="${ovSearch}" oninput="ovSearch=this.value;renderOverview()">
+      </div>
+    <div style="overflow-x:auto"><table style="min-width:520px"><thead><tr><th>Event</th><th>Date</th><th>Type</th><th>Status</th><th class="r">Attend.</th><th class="r">Cost</th><th class="r">Net</th></tr></thead><tbody>${rows||'<tr><td colspan="7" style="color:var(--muted);text-align:center;padding:16px 0">No events match.</td></tr>'}</tbody></table></div></div>`;
+}
+
+function typePill(t){return`<span class="type-pill" style="background:${typeBg(t)};color:${typeColor(t)}">${t}</span>`;}
+
+let evFilter="",evType="All";
+function renderEvents(){
+  const types=["All",...new Set(events.map(e=>e.type))].sort();
+
+  if(types[0]!=="All")types.unshift("All");
+  const filtered=events.filter(e=>{
+    const tm=evType==="All"||e.type===evType;
+    const sm=!evFilter||e.name.toLowerCase().includes(evFilter.toLowerCase())||(e.menu||"").toLowerCase().includes(evFilter.toLowerCase());
+    return tm&&sm;
+  }).sort((a,b)=>gMs(b)-gMs(a));
+  const opts=types.map(t=>`<option value="${t}"${t===evType?" selected":""}>${t}</option>`).join("");
+  const cards=filtered.map(e=>{const ic=e.financials.totalIncome>=0?C.green:C.red;return`
+    <div class="event-card" style="border-top-color:${typeColor(e.type)}">
+      <div style="font-size:13px;font-weight:700;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.name}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px">${fD(e.date)}</div>
+      ${typePill(e.type)}${statusPill(e.status||"Scheduled")}
+      <div class="ec-stats">
+        <div><div class="ec-stat-label">Attendance</div><div class="ec-stat-val">${tA(e)||"—"}</div></div>
+        <div><div class="ec-stat-label">Cost</div><div class="ec-stat-val">${fC(e.financials.totalCost)}</div></div>
+        <div><div class="ec-stat-label">Offering</div><div class="ec-stat-val">${fC(e.financials.totalOffering)}</div></div>
+        <div><div class="ec-stat-label">Net</div><div class="ec-stat-val" style="color:${ic}">${fCS(e.financials.totalIncome)}</div></div>
+      </div>
+      <div class="ec-actions">
+        <button class="btn" onclick="showDetail(${e.id})">&#128065; View</button>
+        <button class="btn" onclick="openEdit(${e.id})">&#9998; Edit</button>
+        <button class="btn btn-danger" onclick="askDelete(${e.id})" style="flex:0;padding:4px 8px">&#128465;</button>
+      </div>
+    </div>`;}).join("");
+  document.getElementById("panel-events").innerHTML=`
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <input class="inp" style="flex:1;min-width:140px" placeholder="Search events…" value="${evFilter}" oninput="evFilter=this.value;renderEvents()">
+      <select class="inp" style="width:auto" onchange="evType=this.value;renderEvents()">${opts}</select>
+    </div>
+    <div class="event-grid">${cards||'<p style="color:var(--muted);font-size:13px">No events match.</p>'}</div>`;
+}
+
+
+function renderCharts(){
+  const byType={};events.forEach(e=>{byType[e.type]=(byType[e.type]||0)+1;});
+  const total=Object.values(byType).reduce((s,v)=>s+v,0);
+  const typeCards=Object.entries(byType).map(([t,v])=>`
+    <div style="display:flex;align-items:center;gap:10px;background:${typeBg(t)};border-radius:10px;padding:10px 14px;flex:1;min-width:130px;border:1px solid var(--border)">
+      <div style="width:4px;height:36px;border-radius:2px;background:${typeColor(t)};flex-shrink:0"></div>
+      <div><div style="font-weight:900;font-size:22px;letter-spacing:-.5px;color:${typeColor(t)}">${v}</div><div style="font-size:11px;color:var(--muted);font-weight:700">${t} &middot; ${Math.round(v/total*100)}%</div></div>
+    </div>`).join("");
+  const sorted12=[...events].filter(e=>e.date).sort((a,b)=>gMs(a)-gMs(b)).slice(-12);
+  const mx=Math.max(...sorted12.map(e=>Math.max(e.financials.totalCost,e.financials.totalOffering)),1);
+  const barRows=sorted12.map(e=>`
+    <div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+        <span style="font-weight:700">${e.name.length>22?e.name.slice(0,22)+"…":e.name}</span>
+        <span style="color:var(--muted)">${fC(e.financials.totalCost)} &middot; ${fC(e.financials.totalOffering)}</span>
+      </div>
+      <div style="height:7px;background:var(--sand);border-radius:4px;margin-bottom:2px"><div style="height:100%;width:${(e.financials.totalCost/mx*100).toFixed(1)}%;background:${C.red};border-radius:4px"></div></div>
+      <div style="height:7px;background:var(--sand);border-radius:4px"><div style="height:100%;width:${(e.financials.totalOffering/mx*100).toFixed(1)}%;background:${C.green};border-radius:4px"></div></div>
+    </div>`).join("");
+  const monthly={};events.forEach(e=>{if(!e.date)return;const m=new Date(e.date+"T12:00:00").toLocaleDateString("en-US",{month:"short"});monthly[m]=(monthly[m]||0)+tA(e);});
+  const mxA=Math.max(...Object.values(monthly),1);
+  const attBars=Object.entries(monthly).map(([m,v])=>`
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+      <div style="font-size:10px;color:var(--muted);font-weight:700">${v}</div>
+      <div style="width:100%;height:${Math.round(v/mxA*90)}px;background:var(--navy);border-radius:3px 3px 0 0;min-height:2px"></div>
+      <div style="font-size:9px;color:var(--muted);font-weight:600">${m}</div>
+    </div>`).join("");
+  document.getElementById("panel-charts").innerHTML=`
+    <div class="card" style="margin-bottom:16px"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Events by type</div><div style="display:flex;flex-wrap:wrap;gap:8px">${typeCards}</div></div>
+    <div class="card" style="margin-bottom:16px"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px">Cost vs offering — recent 12</div>${barRows}<div style="display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--muted);font-weight:700"><span>&#9632; <span style="color:${C.red}">Cost</span></span><span>&#9632; <span style="color:${C.green}">Offering</span></span></div></div>
+    <div class="card"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px">Attendance by month</div><div style="display:flex;align-items:flex-end;gap:6px;height:110px">${attBars}</div></div>`;
+}
+
+
+function renderDetail(e){
+  const ic=e.financials.totalIncome>=0?C.green:C.red;
+  document.getElementById("detail-meta").innerHTML=`${typePill(e.type)}${statusPill(e.status||"Scheduled")}<span style="font-size:12px;color:var(--muted);font-weight:700">${fD(e.date)}</span><span style="font-size:13px;font-weight:700;color:${ic}">${e.financials.totalIncome>=0?"+":""}${fCS(e.financials.totalIncome)} net</span>`;
+  ["summary","purchases","offering","schedule"].forEach(t=>document.getElementById("stab-"+t).classList.toggle("active",t===activeDetailTab));
+  renderDetailContent(e);
+}
+
+function renderDetailContent(e){
+  const att=tA(e),ic=e.financials.totalIncome>=0?C.green:C.red,o=e.offering||emptyOffer();
+  let html="";
+  if(activeDetailTab==="summary"){
+    const cP=att>0?"$"+(e.financials.totalCost/att).toFixed(2):"—";
+    const oP=att>0?"$"+(e.financials.totalOffering/att).toFixed(2):"—";
+    html=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div class="detail-block"><div class="detail-block-label">Attendance</div>
+        ${[["Adults",e.attendance.adults||0],["Children",e.attendance.children||0],["Kids meals",e.attendance.kidsMeals||0]].map(r=>`<div class="detail-row"><span>${r[0]}</span><strong>${r[1]}</strong></div>`).join("")}
+        <div class="detail-row sep"><span>Total</span><strong>${att||"—"}</strong></div>
+      </div>
+      <div class="detail-block"><div class="detail-block-label">Financials</div>
+        ${[["Total cost",fC(e.financials.totalCost)],["Cost/person",cP],["Total offering",fC(e.financials.totalOffering)],["Offering/person",oP]].map(r=>`<div class="detail-row"><span>${r[0]}</span><strong>${r[1]}</strong></div>`).join("")}
+        <div class="detail-row sep"><span>Net income</span><strong style="color:${ic}">${fCS(e.financials.totalIncome)}</strong></div>
+      </div>
+    </div>
+    ${e.menu?`<div class="card" style="margin-bottom:12px"><div class="detail-block-label">Menu</div><p style="font-size:13px">${e.menu}</p></div>`:""}
+    ${(e.volunteers||[]).length?`<div class="card"><div class="detail-block-label">Volunteers</div>${volTable(e.volunteers)}</div>`:""}`;
+  } else if(activeDetailTab==="purchases"){
+    const pTD=e.purchases.reduce((s,p)=>s+(+p.debit||0),0);
+    const pTC=e.purchases.reduce((s,p)=>s+(+p.credit||0),0);
+    html=`<div class="card">${e.purchases.length?`<div style="overflow-x:auto"><table style="min-width:420px"><thead><tr><th>Vendor</th><th>By</th><th>Description</th><th class="r">Debit</th><th class="r">Credit</th><th class="r">Net</th></tr></thead><tbody>${e.purchases.map(p=>`<tr><td>${p.vendor||"—"}</td><td>${p.purchasedBy||"—"}</td><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.description||"—"}</td><td class="r">${fC(p.debit)}</td><td class="r" style="color:${C.green}">${p.credit?fC(p.credit):"—"}</td><td class="r" style="font-weight:700">${fC((+p.debit||0)-(+p.credit||0))}</td></tr>`).join("")}</tbody><tfoot style="background:var(--sand)"><tr><td colspan="3" style="padding:6px 8px;font-size:11px;font-weight:700;color:var(--muted)">Total</td><td class="r" style="font-weight:700">${fC(pTD)}</td><td class="r" style="font-weight:700;color:${C.green}">${fC(pTC)}</td><td class="r" style="font-weight:700">${fC(pTD-pTC)}</td></tr></tfoot></table></div>`:`<p style="color:var(--muted);font-size:13px">No purchases recorded.</p>`}</div>`;
+  } else if(activeDetailTab==="offering"){
+    const cashT=[["hundreds",100],["fifties",50],["twenties",20],["tens",10],["fives",5],["ones",1]].reduce((s,[k,m])=>s+(o[k]||0)*m,0)+(+o.coin||0);
+
+    html=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="detail-block"><div class="detail-block-label">Cash</div>
+        ${[["Hundreds",o.hundreds,100],["Fifties",o.fifties,50],["Twenties",o.twenties,20],["Tens",o.tens,10],["Fives",o.fives,5],["Ones",o.ones,1]].map(r=>`<div class="detail-row"><span>${r[0]}</span><strong>${r[1]||0} × $${r[2]} = ${fC((r[1]||0)*r[2])}</strong></div>`).join("")}
+        <div class="detail-row"><span>Coin</span><strong>${fC(o.coin||0)}</strong></div>
+        <div class="detail-row sep"><span>Cash total</span><strong>${fC(cashT)}</strong></div>
+      </div>
+      <div class="detail-block"><div class="detail-block-label">Other</div>
+        ${[["Checks",o.checks],["Online",o.online],["Square",o.square]].map(r=>`<div class="detail-row"><span>${r[0]}</span><strong>${fC(r[1]||0)}</strong></div>`).join("")}
+        <div class="detail-row sep"><span>Total offering</span><strong style="color:${C.green};font-size:14px">${fC(offerTotal(o))}</strong></div>
+      </div>
+    </div>`;
+  } else {
+    html=`<div class="card">${(e.volunteers||[]).length?volTable(e.volunteers):`<p style="color:var(--muted);font-size:13px">No volunteers scheduled.</p>`}</div>`;
+  }
+  document.getElementById("detail-content").innerHTML=html;
+}
+
+function volTable(vs){
+  return`<div style="overflow-x:auto"><table style="min-width:360px"><thead><tr><th>Volunteer</th><th style="text-align:center">KTCHN Prep</th><th style="text-align:center">KTCHN Event</th><th style="text-align:center">HSPTLY Prep</th><th style="text-align:center">HSPTLY Event</th></tr></thead><tbody>${vs.map(v=>`<tr><td style="font-weight:700">${v.name||"—"}</td>${[v.kitchenPrep,v.kitchenEvent,v.hospPrep,v.hospEvent].map(c=>`<td style="text-align:center;color:${c?C.green:"#ddd"};font-weight:700;font-size:14px">${c?"✓":"—"}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+}
+
+function openNewEvent(){editingEvent=emptyEvent();renderForm();}
+function openEdit(id){editingEvent=JSON.parse(JSON.stringify(events.find(e=>e.id===id)));renderForm();}
+
+function renderForm(){
+  const e=editingEvent;
+  const isNew=!events.find(x=>x.id===e.id);
+  const dStr=e.date||"";
+  const typeOpts=["Mug","Dinner","Craft","Craft Event","Luncheon","Breakfast","Funeral","Other"].map(t=>`<option value="${t}"${e.type===t?" selected":""}>${t}</option>`).join("");
+  const statusOpts=["Scheduled","Planning","Pending","Completed"].map(s=>`<option value="${s}"${(e.status||"Scheduled")===s?" selected":""}>${s}</option>`).join("");
+  const pRows=(e.purchases||[]).map((p,i)=>`
+    <div class="prow">
+      <input class="inp" value="${p.vendor||""}" onchange="editingEvent.purchases[${i}].vendor=this.value" placeholder="Vendor">
+
+      <input class="inp" value="${p.purchasedBy||""}" onchange="editingEvent.purchases[${i}].purchasedBy=this.value" placeholder="By">
+      <input class="inp" type="number" step="0.01" value="${p.debit||""}" onchange="editingEvent.purchases[${i}].debit=parseFloat(this.value)||0;updateFormTotals()" placeholder="0.00">
+      <input class="inp" value="${p.description||""}" onchange="editingEvent.purchases[${i}].description=this.value" placeholder="Description">
+      <input class="inp" type="number" step="0.01" value="${p.credit||""}" onchange="editingEvent.purchases[${i}].credit=parseFloat(this.value)||0;updateFormTotals()" placeholder="0.00">
+      <span style="font-size:11px;text-align:right;color:var(--muted);font-weight:700">${fC((+p.debit||0)-(+p.credit||0))}</span>
+      <button style="background:none;border:none;cursor:pointer;color:${C.red};font-size:18px;padding:0;line-height:1" onclick="rmPurch(${i})">×</button>
+    </div>`).join("");
+  const ofFields=[["Hundreds","hundreds"],["Fifties","fifties"],["Twenties","twenties"],["Tens","tens"],["Fives","fives"],["Ones","ones"],["Coin","coin"],["Checks","checks"],["Online","online"],["Square","square"]];
+  const ofRows=ofFields.map(([l,k])=>`<div class="offer-row"><label class="offer-label">${l}</label><input class="inp" style="width:90px" type="number" step="0.01" value="${(e.offering||{})[k]||0}" onchange="editingEvent.offering['${k}']=parseFloat(this.value)||0;updateFormTotals()"></div>`).join("");
+  const vRows=(e.volunteers||[]).map((v,i)=>`
+    <div class="vrow">
+      <input class="inp" value="${v.name||""}" onchange="editingEvent.volunteers[${i}].name=this.value" placeholder="Volunteer name">
+      <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);cursor:pointer;font-weight:700"><input type="checkbox"${v.kitchenPrep?" checked":""} onchange="editingEvent.volunteers[${i}].kitchenPrep=this.checked"> KTCHN Prep</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);cursor:pointer;font-weight:700"><input type="checkbox"${v.kitchenEvent?" checked":""} onchange="editingEvent.volunteers[${i}].kitchenEvent=this.checked"> KTCHN Event</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);cursor:pointer;font-weight:700"><input type="checkbox"${v.hospPrep?" checked":""} onchange="editingEvent.volunteers[${i}].hospPrep=this.checked"> HSPTLY Prep</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);cursor:pointer;font-weight:700"><input type="checkbox"${v.hospEvent?" checked":""} onchange="editingEvent.volunteers[${i}].hospEvent=this.checked"> HSPTLY Event</label>
+      <button style="background:none;border:none;cursor:pointer;color:${C.red};font-size:18px;padding:0;line-height:1" onclick="rmVol(${i})">×</button>
+    </div>`).join("");
+  document.getElementById("form-inner").innerHTML=`
+    <div class="modal-header">
+      <div><div class="modal-eyebrow">DELC Food & Beverage</div><h2 class="modal-title">${isNew?"New Event":"Edit — "+e.name}</h2></div>
+      <button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:22px;line-height:1" onclick="closeForm()">×</button>
+    </div>
+    <div class="form-grid">
+      <div><label class="lbl">Event name</label><input class="inp" id="f-name" value="${e.name}" oninput="editingEvent.name=this.value"></div>
+      <div><label class="lbl">Date</label><input class="inp" type="date" value="${dStr}" onchange="editingEvent.date=this.value"></div>
+      <div><label class="lbl">Type</label><select class="inp" onchange="editingEvent.type=this.value">${typeOpts}</select></div>
+      <div><label class="lbl">Status</label><select class="inp" onchange="editingEvent.status=this.value">${statusOpts}</select></div>
+    </div>
+    <div style="margin-top:12px"><label class="lbl">Menu / notes</label><textarea class="inp" style="min-height:50px;resize:vertical" oninput="editingEvent.menu=this.value">${e.menu||""}</textarea></div>
+    <div class="section-head"><span class="section-label">Attendance</span></div>
+    <div class="form-grid-3">
+      <div><label class="lbl">Adults</label><input class="inp" type="number" value="${e.attendance.adults||0}" onchange="editingEvent.attendance.adults=parseInt(this.value)||0"></div>
+
+      <div><label class="lbl">Children</label><input class="inp" type="number" value="${e.attendance.children||0}" onchange="editingEvent.attendance.children=parseInt(this.value)||0"></div>
+      <div><label class="lbl">Kids meals</label><input class="inp" type="number" value="${e.attendance.kidsMeals||0}" onchange="editingEvent.attendance.kidsMeals=parseInt(this.value)||0"></div>
+    </div>
+    <div class="section-head"><span class="section-label">Purchases</span><button class="btn" style="font-size:11px;padding:4px 10px" onclick="addPurch()">+ Add row</button></div>
+    <div style="font-size:10px;color:var(--muted);display:grid;grid-template-columns:1fr 1fr 80px 2fr 80px 55px 22px;gap:5px;margin-bottom:5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em">
+      <span>Vendor</span><span>By</span><span>Debit</span><span>Description</span><span>Credit</span><span>Net</span><span></span>
+    </div>
+    <div id="purch-rows">${pRows||'<p style="color:var(--muted);font-size:12px;margin:4px 0">No purchases yet.</p>'}</div>
+    <div style="text-align:right;font-size:12px;color:var(--muted);margin-top:5px">Total cost: <strong id="cost-disp" style="color:var(--navy)">${fC(calcCost(e))}</strong></div>
+    <div class="section-head"><span class="section-label">Offering count</span></div>
+    <div class="form-2col" style="margin-bottom:6px">${ofRows}</div>
+    <div style="text-align:right;font-size:12px;color:var(--muted)">Offering total: <strong id="offer-disp" style="color:${C.green}">${fC(offerTotal(e.offering||emptyOffer()))}</strong></div>
+    <div class="section-head"><span class="section-label">Volunteer schedule</span><button class="btn" style="font-size:11px;padding:4px 10px" onclick="addVol()">+ Add volunteer</button></div>
+    <div id="vol-rows">${vRows||'<p style="color:var(--muted);font-size:12px;margin:4px 0">No volunteers yet.</p>'}</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <button class="btn" onclick="closeForm()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveForm()">&#10003; Save event</button>
+    </div>`;
+  document.getElementById("form-modal").style.display="flex";
+}
+
+function updateFormTotals(){
+  const cd=document.getElementById("cost-disp"),od=document.getElementById("offer-disp");
+  if(cd)cd.textContent=fC(calcCost(editingEvent));
+  if(od)od.textContent=fC(offerTotal(editingEvent.offering||emptyOffer()));
+}
+
+function addPurch(){editingEvent.purchases.push({vendor:"",purchasedBy:"",description:"",debit:0,credit:0});renderForm();}
+function rmPurch(i){editingEvent.purchases.splice(i,1);renderForm();}
+function addVol(){if(!editingEvent.volunteers)editingEvent.volunteers=[];editingEvent.volunteers.push({name:"",kitchenPrep:false,kitchenEvent:false,hospPrep:false,hospEvent:false});renderForm();}
+function rmVol(i){editingEvent.volunteers.splice(i,1);renderForm();}
+
+
+function saveForm(){
+  if(!editingEvent.name.trim()){alert("Please enter an event name.");return;}
+  const cost=calcCost(editingEvent);
+  const offer=offerTotal(editingEvent.offering||emptyOffer());
+  editingEvent.financials={totalCost:Math.round(cost*100)/100,totalOffering:Math.round(offer*100)/100,totalIncome:Math.round((offer-cost)*100)/100};
+  const idx=events.findIndex(e=>e.id===editingEvent.id);
+  if(idx>=0)events[idx]=editingEvent;else events.push(editingEvent);
+  const savedId=editingEvent.id;
+  closeForm();saveAll();
+  if(currentEventId===savedId)showDetail(savedId);else{setTab(activeTab);}
+  document.getElementById("tab-events").textContent="Events ("+events.length+")";
+  showToast("Event saved");
+}
+
+function closeForm(){document.getElementById("form-modal").style.display="none";editingEvent=null;}
+
+function printReport(id){
+  const e=events.find(x=>x.id===id);if(!e)return;
+  const logoEl=document.querySelector('.top-nav img');
+  const logoSrc=logoEl?logoEl.src:'';
+  const att=tA(e),o=e.offering||emptyOffer(),ic=e.financials.totalIncome>=0?"#1a6e3c":"#b91c1c";
+  const cashT=[["hundreds",100],["fifties",50],["twenties",20],["tens",10],["fives",5],["ones",1]].reduce((s,[k,m])=>s+(o[k]||0)*m,0)+(+o.coin||0);
+  const offerGrand=offerTotal(o);
+  const cP=att>0?"$"+(e.financials.totalCost/att).toFixed(2):"—";
+  const oP=att>0?"$"+(e.financials.totalOffering/att).toFixed(2):"—";
+  const pTD=e.purchases.reduce((s,p)=>s+(+p.debit||0),0);
+  const pTC=e.purchases.reduce((s,p)=>s+(+p.credit||0),0);
+  const purchRows=e.purchases.length?e.purchases.map(p=>`<tr><td>${p.vendor||"—"}</td><td>${p.purchasedBy||"—"}</td><td>${p.description||"—"}</td><td class="r">${fC(+p.debit||0)}</td><td class="r">${p.credit?fC(+p.credit):"—"}</td><td class="r"><strong>${fC((+p.debit||0)-(+p.credit||0))}</strong></td></tr>`).join("")+`<tr class="total-row"><td colspan="3">Total</td><td class="r"><strong>${fC(pTD)}</strong></td><td class="r"><strong>${fC(pTC)}</strong></td><td class="r"><strong>${fC(pTD-pTC)}</strong></td></tr>`:'<tr><td colspan="6" style="color:#888;font-style:italic">No purchases recorded.</td></tr>';
+  const volRows=(e.volunteers||[]).length?(e.volunteers||[]).map(v=>`<tr><td><strong>${v.name||"—"}</strong></td><td class="c">${v.kitchenPrep?"✓":""}</td><td class="c">${v.kitchenEvent?"✓":""}</td><td class="c">${v.hospPrep?"✓":""}</td><td class="c">${v.hospEvent?"✓":""}</td></tr>`).join(""):'<tr><td colspan="5" style="color:#888;font-style:italic">No volunteers scheduled.</td></tr>';
+  const offerRows=[["$100 bills","hundreds",100],["$50 bills","fifties",50],["$20 bills","twenties",20],["$10 bills","tens",10],["$5 bills","fives",5],["$1 bills","ones",1]].map(([l,k,m])=>`<tr><td>${l}</td><td class="r">${o[k]||0}</td><td class="r">${fC((o[k]||0)*m)}</td></tr>`).join("")+`<tr><td>Coin</td><td class="r">—</td><td class="r">${fC(+o.coin||0)}</td></tr><tr class="total-row"><td><strong>Cash subtotal</strong></td><td></td><td class="r"><strong>${fC(cashT)}</strong></td></tr>`;
+  const otherRows=[["Checks",o.checks],["Online",o.online],["Square / Card",o.square]].map(([l,v])=>`<tr><td>${l}</td><td class="r">—</td><td class="r">${fC(+v||0)}</td></tr>`).join("")+`<tr class="total-row grand"><td colspan="2"><strong>TOTAL OFFERING</strong></td><td class="r"><strong>${fC(offerGrand)}</strong></td></tr>`;
+
+  const overlay=document.getElementById("print-overlay");
+
+  overlay.innerHTML=`
+  <style>
+    #print-overlay *{box-sizing:border-box}
+    #print-overlay{font-family:'Helvetica Neue',Arial,sans-serif;color:#1a1a1a;font-size:11pt;background:#fff}
+    #print-overlay .rh{display:flex;align-items:center;gap:18px;padding-bottom:14px;border-bottom:3px solid #1a3355;margin-bottom:18px}
+    #print-overlay .rlogo{height:64px;width:64px;object-fit:contain}
+    #print-overlay .rdiv{width:1px;height:60px;background:#e4d8c8}
+    #print-overlay .rtb{flex:1}
+    #print-overlay .rorg{font-size:10pt;color:#7a6a55;font-weight:700}
+    #print-overlay .rname{font-size:20pt;font-weight:900;color:#1a3355;letter-spacing:-.5px;line-height:1.1}
+    #print-overlay .rmeta{font-size:9pt;color:#7a6a55;margin-top:4px}
+    #print-overlay .rbadge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:9pt;font-weight:700}
+    #print-overlay .net-box{display:flex;align-items:center;justify-content:center;gap:18px;background:#f5ede0;border:2px solid #e4d8c8;border-radius:10px;padding:12px 20px;margin-bottom:18px}
+    #print-overlay .ni{text-align:center}
+    #print-overlay .nl{font-size:8pt;font-weight:700;color:#7a6a55;text-transform:uppercase;letter-spacing:.06em}
+    #print-overlay .nv{font-size:16pt;font-weight:900;letter-spacing:-.5px}
+    #print-overlay .nd{width:1px;height:40px;background:#e4d8c8}
+    #print-overlay .sec{margin-bottom:18px}
+    #print-overlay .st{font-size:9pt;font-weight:700;color:#7a6a55;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid #e4d8c8;padding-bottom:4px;margin-bottom:10px}
+    #print-overlay .sg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    #print-overlay .sb{background:#fdf8f2;border:1px solid #e4d8c8;border-radius:8px;padding:10px 14px}
+    #print-overlay .sbt{font-size:8pt;font-weight:700;color:#7a6a55;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+    #print-overlay .row{display:flex;justify-content:space-between;font-size:10pt;padding:2px 0;border-bottom:1px dotted #e4d8c8}
+    #print-overlay .row:last-child{border-bottom:none}
+    #print-overlay .row.sep{border-top:1.5px solid #c9973a;margin-top:4px;padding-top:5px;font-weight:700}
+    #print-overlay table{width:100%;border-collapse:collapse;font-size:9.5pt}
+    #print-overlay th{text-align:left;font-size:8pt;font-weight:700;color:#7a6a55;padding:4px 6px;border-bottom:2px solid #1a3355;text-transform:uppercase;letter-spacing:.04em;background:#f5ede0}
+    #print-overlay th.r,#print-overlay td.r{text-align:right}
+    #print-overlay th.c,#print-overlay td.c{text-align:center}
+    #print-overlay td{padding:5px 6px;border-bottom:1px solid #f5ede0}
+    #print-overlay tr:nth-child(even) td{background:#fdf8f2}
+    #print-overlay tr.total-row td{background:#e8eef7;font-weight:700;border-top:2px solid #1a3355}
+
+    #print-overlay tr.grand td{background:#1a3355;color:#fff;font-size:11pt}
+    #print-overlay .tg{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    #print-overlay .menu-box{background:#fdf8f2;border:1px solid #e4d8c8;border-radius:8px;padding:10px 14px;font-size:10pt;line-height:1.5}
+    #print-overlay .rf{margin-top:24px;padding-top:10px;border-top:1px solid #e4d8c8;font-size:8pt;color:#7a6a55;display:flex;justify-content:space-between}
+    #print-overlay .close-btn{position:fixed;top:16px;right:20px;background:#1a3355;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer;z-index:10000}
+    @media print{#print-overlay .close-btn{display:none}}
+  </style>
+  <button class="close-btn" onclick="closePrintOverlay()">✕ Close</button>
+  <div class="rh">
+    ${logoSrc?`<img src="${logoSrc}" class="rlogo" alt="DELC">`:'<div style="font-size:26px;font-weight:900;color:#1a3355">DELC</div>'}
+    <div class="rdiv"></div>
+    <div class="rtb">
+      <div class="rorg">DELC Food &amp; Beverage — Service &amp; Hospitality Team</div>
+      <div class="rname">${e.name}</div>
+      <div class="rmeta">${fD(e.date)} &nbsp;·&nbsp; <span class="rbadge" style="background:${typeBg(e.type)};color:${typeColor(e.type)}">${e.type}</span>${e.menu?' &nbsp;·&nbsp; Menu on file':''}</div>
+    </div>
+  </div>
+  <div class="net-box">
+    <div class="ni"><div class="nl">Attendance</div><div class="nv" style="color:#1a3355">${att||"—"}</div></div>
+    <div class="nd"></div>
+    <div class="ni"><div class="nl">Total Cost</div><div class="nv" style="color:#b91c1c">${fC(e.financials.totalCost)}</div></div>
+    <div class="nd"></div>
+    <div class="ni"><div class="nl">Total Offering</div><div class="nv" style="color:#1a6e3c">${fC(e.financials.totalOffering)}</div></div>
+    <div class="nd"></div>
+    <div class="ni"><div class="nl">Net Income</div><div class="nv" style="color:${ic}">${fCS(e.financials.totalIncome)}</div></div>
+  </div>
+  <div class="sec">
+    <div class="st">Attendance &amp; Financial Detail</div>
+    <div class="sg">
+      <div class="sb"><div class="sbt">Attendance</div>
+        <div class="row"><span>Adults</span><span>${e.attendance.adults||0}</span></div>
+        <div class="row"><span>Children</span><span>${e.attendance.children||0}</span></div>
+
+        <div class="row"><span>Kids Meals</span><span>${e.attendance.kidsMeals||0}</span></div>
+        <div class="row sep"><span>Total</span><span>${att||"—"}</span></div>
+      </div>
+      <div class="sb"><div class="sbt">Financials</div>
+        <div class="row"><span>Total Cost</span><span style="color:#b91c1c">${fC(e.financials.totalCost)}</span></div>
+        <div class="row"><span>Cost / Person</span><span>${cP}</span></div>
+        <div class="row"><span>Total Offering</span><span style="color:#1a6e3c">${fC(e.financials.totalOffering)}</span></div>
+        <div class="row"><span>Offering / Person</span><span>${oP}</span></div>
+        <div class="row sep"><span>Net Income</span><span style="color:${ic}">${fCS(e.financials.totalIncome)}</span></div>
+      </div>
+    </div>
+  </div>
+  ${e.menu?`<div class="sec"><div class="st">Menu</div><div class="menu-box">${e.menu}</div></div>`:''}
+  <div class="sec"><div class="st">Purchases</div>
+    <table><thead><tr><th>Vendor</th><th>By</th><th>Description</th><th class="r">Debit</th><th class="r">Credit</th><th class="r">Net</th></tr></thead>
+    <tbody>${purchRows}</tbody></table>
+  </div>
+  <div class="sec"><div class="st">Offering Count</div>
+    <div class="tg">
+      <table><thead><tr><th>Denomination</th><th class="r">Count</th><th class="r">Amount</th></tr></thead><tbody>${offerRows}</tbody></table>
+      <table><thead><tr><th>Method</th><th class="r">Count</th><th class="r">Amount</th></tr></thead><tbody>${otherRows}</tbody></table>
+    </div>
+  </div>
+  <div class="sec"><div class="st">Volunteer Schedule</div>
+    <table><thead><tr><th>Volunteer</th><th class="c">Kitchen Prep</th><th class="c">Kitchen Event</th><th class="c">Hosp. Prep</th><th class="c">Hosp. Event</th></tr></thead>
+    <tbody>${volRows}</tbody></table>
+  </div>
+  <div class="rf">
+    <span>DELC Food &amp; Beverage 2026 — ${e.name}</span>
+    <span>Printed ${new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}</span>
+  </div>`;
+
+
+  overlay.style.display="block";
+  document.body.style.overflow="hidden";
+  setTimeout(()=>window.print(),300);
+}
+
+function closePrintOverlay(){
+  document.getElementById("print-overlay").style.display="none";
+  document.body.style.overflow="";
+}
+
+let deleteTargetId=null;
+function askDelete(id){
+  deleteTargetId=id;const e=events.find(x=>x.id===id);
+  document.getElementById("confirm-inner").innerHTML=`
+    <div style="font-size:36px;margin-bottom:12px">⚠️</div>
+    <h2 style="font-size:16px;font-weight:900;color:var(--navy);margin-bottom:8px">Delete this event?</h2>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:20px">"${e?e.name:""}" will be permanently removed.</p>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="btn" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-danger" onclick="doDelete()">🗑 Delete</button>
+    </div>`;
+  document.getElementById("confirm-modal").style.display="flex";
+}
+function closeConfirm(){document.getElementById("confirm-modal").style.display="none";}
+function doDelete(){events=events.filter(e=>e.id!==deleteTargetId);closeConfirm();saveAll();showDash();showToast("Event deleted","err");}
+
+function openData(){renderDataModal();document.getElementById("data-modal").style.display="flex";}
+function closeData(){document.getElementById("data-modal").style.display="none";}
+
+function renderDataModal(){
+  const bItems=backups.length?backups.map((b,i)=>`
+    <div class="backup-item">
+
+      <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--navy)">${b.name}</div><div style="font-size:11px;color:var(--muted)">${b.date} &middot; ${b.eventCount} events &middot; ${b.size}</div></div>
+      <div style="display:flex;gap:6px">
+        <button class="btn" style="font-size:11px;padding:4px 8px" onclick="dlBackup(${i})">&#8595;</button>
+        <button class="btn btn-warn" style="font-size:11px;padding:4px 8px" onclick="restoreBackup(${i})">&#8635; Restore</button>
+        <button class="btn btn-danger" style="font-size:11px;padding:4px 8px" onclick="delBackup(${i})">&#10005;</button>
+      </div>
+    </div>`).join(""):`<p style="color:var(--muted);font-size:13px;text-align:center;padding:16px 0">No backups yet.</p>`;
+  document.getElementById("data-inner").innerHTML=`
+    <div class="modal-header">
+      <div><div class="modal-eyebrow">DELC Food & Beverage</div><h2 class="modal-title">Data & Backups</h2></div>
+      <button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:22px;line-height:1" onclick="closeData()">×</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div class="detail-block" style="text-align:center"><div style="font-size:30px;font-weight:900;color:var(--navy);letter-spacing:-1px">${events.length}</div><div style="font-size:11px;color:var(--muted);font-weight:700">Events stored</div></div>
+      <div class="detail-block" style="text-align:center"><div style="font-size:30px;font-weight:900;color:var(--navy);letter-spacing:-1px">${backups.length}</div><div style="font-size:11px;color:var(--muted);font-weight:700">Saved backups</div></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      <button class="btn btn-green" onclick="createBackup()">&#128190; Save backup now</button>
+      <button class="btn btn-primary" onclick="exportJSON()">&#8595; Export JSON</button>
+      <button class="btn" onclick="document.getElementById('file-input').click()">&#8593; Import JSON</button>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Saved backups</div>
+      <div style="max-height:260px;overflow-y:auto">${bItems}</div>
+    </div>
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="handleDrop(event)">
+      &#128194; Drop a .json backup file here, or click to browse
+    </div>
+    <div style="background:var(--cream);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--muted);line-height:1.6;border:1px solid var(--border)">
+      Data auto-saves to Supabase and is shared across everyone using this app. Use <strong>Export JSON</strong> for an extra offline copy.
+    </div>`;
+}
+
+
+async function createBackup(){
+  const payload={events};
+  const now=new Date();
+  const name="Backup "+now.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})+" "+now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"});
+  const sizeLabel=fmtSz(JSON.stringify(payload));
+  try{
+    const {error}=await sb.from('backups').insert({name,event_count:events.length,size_label:sizeLabel,payload});
+    if(error)throw error;
+    const {data:rows}=await sb.from('backups').select('id').order('created_at',{ascending:false});
+    if(rows&&rows.length>10){
+      const idsToDelete=rows.slice(10).map(r=>r.id);
+      await sb.from('backups').delete().in('id',idsToDelete);
+    }
+    await loadBackupsOnly();renderDataModal();showToast("Backup saved — "+events.length+" events");
+  }catch(err){console.error("createBackup",err);showToast("Backup failed","err");}
+}
+
+function dlBackup(i){const blob=new Blob([backups[i].payload],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="delc_fb_backup_"+Date.now()+".json";a.click();}
+async function delBackup(i){
+  const b=backups[i];
+  try{
+    if(b.dbId!=null){const {error}=await sb.from('backups').delete().eq('id',b.dbId);if(error)throw error;}
+    await loadBackupsOnly();renderDataModal();showToast("Backup deleted","err");
+  }catch(err){console.error("delBackup",err);showToast("Delete failed","err");}
+}
+async function restoreBackup(i){
+  if(!confirm('Restore "'+backups[i].name+'"? This replaces all current data.'))return;
+  try{const d=JSON.parse(backups[i].payload);events=d.events||[];await saveAll();closeData();showDash();showToast("Restored from backup");}
+  catch(err){console.error("restoreBackup",err);showToast("Restore failed","err");}
+}
+
+function exportJSON(){
+  const p=JSON.stringify({events,exportedAt:new Date().toISOString(),version:"1.0"},null,2);
+  const blob=new Blob([p],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="delc_fb_"+new Date().toISOString().split("T")[0]+".json";a.click();
+  showToast("Exported all data");
+}
+
+function handleImport(input){
+  const file=input.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=async e=>{
+    try{const d=JSON.parse(e.target.result);if(!d.events||!Array.isArray(d.events))throw new Error();if(!confirm("Import "+d.events.length+" events? This replaces current data."))return;events=d.events;await saveAll();closeData();showDash();showToast("Imported "+d.events.length+" events");}
+    catch{showToast("Import failed — check file format","err");}
+  };
+
+  r.readAsText(file);input.value="";
+}
+
+function handleDrop(e){
+  e.preventDefault();document.getElementById("drop-zone").classList.remove("over");
+  const file=e.dataTransfer.files[0];
+  if(!file||!file.name.endsWith(".json")){showToast("Please drop a .json file","err");return;}
+  const r=new FileReader();
+  r.onload=async ev=>{
+    try{const d=JSON.parse(ev.target.result);if(!d.events)throw new Error();if(!confirm("Import "+d.events.length+" events?"))return;events=d.events;await saveAll();closeData();showDash();showToast("Imported "+d.events.length+" events");}
+    catch{showToast("Import failed","err");}
+  };
+  r.readAsText(file);
+}
+
+(async function(){await loadAll();setTab("overview");})();
+</script>
+</body>
+</html>
