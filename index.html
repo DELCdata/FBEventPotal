@@ -739,7 +739,11 @@ function enterApp(sess){
   document.getElementById("app-screen").style.display="flex";
   const nm=sess.displayName||sess.username;
   document.getElementById("nav-user").textContent=nm;document.getElementById("nav-avatar").textContent=nm.split(/\s+/).map(w=>w[0]).join("").slice(0,2);
+  openPendingEv();
 }
+/* ?event=<id> (from delcDINING.EVENT) opens that event once signed in and loaded */
+let pendingEv=null;
+function openPendingEv(){if(!pendingEv||!currentUsername)return;const ev=events.find(x=>String(x.id)===pendingEv);if(!ev)return;pendingEv=null;showDetail(ev.id);}
 let loginBusy=false;
 async function doLogin(){
   if(loginBusy)return;
@@ -1007,6 +1011,7 @@ function renderDetailContent(e){
         <div class="detail-row" id="pn-sum-row" style="display:none;cursor:pointer" onclick="setDetailTab('pantry')"><span>Pantry supplies used</span><strong id="pn-sum-val" style="color:var(--gold)"></strong></div>
       </div>
     </div>
+    <div id="seat-card"></div>
     ${e.menu?`<div class="card" style="margin-bottom:12px"><div class="detail-block-label">Menu</div><p style="font-size:13px">${e.menu}</p></div>`:""}
     ${evJobs(e).length?(function(){const s=schedStats(e);return `<div class="card sum-sched" onclick="setDetailTab('schedule')"><div class="card-h" style="margin-bottom:6px"><div class="detail-block-label" style="margin:0">Schedule</div><span class="card-s">${e.startTime?fTR(e.startTime,e.endTime):""}</span></div><div class="detail-row"><span>${s.jobs} job${s.jobs===1?"":"s"} · ${s.tasks} task${s.tasks===1?"":"s"}</span><strong>${s.peopleCount} people</strong></div>${s.open?`<div class="detail-row"><span>Open slots</span><strong style="color:#b45309">${s.open}</strong></div>`:""}</div>`;})():(e.volunteers||[]).length?`<div class="card"><div class="detail-block-label">Volunteers</div>${volTable(e.volunteers)}</div>`:""}`;
   } else if(activeDetailTab==="purchases"){
@@ -1033,6 +1038,10 @@ function renderDetailContent(e){
     html=schedTabHtml(e);
   }
   document.getElementById("detail-content").innerHTML=html;
+  if(activeDetailTab==="summary") seatForEvent(e.id).then(rows=>{
+    const box=document.getElementById("seat-card"); if(!box||currentEventId!==e.id) return;
+    box.innerHTML=seatHtml(e,rows);
+  });
   pantryForEvent(e.id).then(ds=>{
     if(currentEventId!==e.id) return;
     const tot=ds.reduce((s,d)=>s+pnCost(d),0);
@@ -1041,6 +1050,26 @@ function renderDetailContent(e){
     const card=document.getElementById("pn-card");
     if(card) card.innerHTML=pantryHtml(ds,tot);
   });
+}
+
+// ── Seating chart / room layout for this event in delcDINING.EVENT (linked by seat_events.settings.fb_event_id) ──
+const SEAT_URL="https://delcdata.github.io/delcSEATING/";
+const _stCache={};
+async function seatForEvent(id){
+  const k=String(id);
+  if(_stCache[k]&&Date.now()-_stCache[k].t<30000) return _stCache[k].d;
+  try{
+    const {data,error}=await sb.from("seat_events").select("id,name,event_date,archived,settings").eq("settings->>fb_event_id",k);
+    if(error) throw error;
+    const d=(data||[]).filter(r=>!r.archived); _stCache[k]={t:Date.now(),d}; return d;
+  }catch(err){ console.error("seating",err); return []; }
+}
+function seatHtml(e,rows){
+  const esc=v=>String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
+  if(rows.length) return `<div class="card" style="margin-bottom:12px"><div class="card-h" style="margin-bottom:6px"><div class="detail-block-label" style="margin:0">Seating &amp; room layout</div></div>`+
+    rows.map(r=>`<div class="detail-row"><span>${esc(r.name)} <span style="color:var(--muted)">· ${(r.settings&&r.settings.kind)==="vendor"?"vendor layout":"dinner seating"}</span></span><a class="btn btn-sm" href="${SEAT_URL}?event=${encodeURIComponent(r.id)}" target="_blank" rel="noopener">Open in delcDINING.EVENT ↗</a></div>`).join("")+`</div>`;
+  if(/^mug$/i.test(e.type||"")) return "";
+  return `<div class="card" style="margin-bottom:12px"><div class="detail-row" style="border:0"><span><span class="detail-block-label" style="margin:0 8px 0 0">Seating &amp; room layout</span><span style="color:var(--muted);font-size:12px">None yet</span></span><a class="btn btn-sm" href="${SEAT_URL}?from=${encodeURIComponent(e.id)}" target="_blank" rel="noopener">Start one in delcDINING.EVENT ↗</a></div></div>`;
 }
 
 // ── Pantry supplies dispensed to this event (HS Pantry app + Mug close-outs) ──
@@ -1806,6 +1835,7 @@ async function deleteTemplate(id){var t=TEMPLATES.find(function(x){return x.id==
   const ll=document.getElementById("login-logo");if(ll&&window.DELC)ll.innerHTML=DELC.logoImg();
   await loadAll();
   setTab("overview");
+  try{const q=new URLSearchParams(location.search).get("event");if(q){history.replaceState(null,"",location.pathname);pendingEv=q;openPendingEv();}}catch(_){}
   document.addEventListener("visibilitychange",refreshFromServer);window.addEventListener("focus",refreshFromServer);setInterval(refreshFromServer,60000);
 })();
 </script>
