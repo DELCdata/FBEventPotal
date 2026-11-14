@@ -9,7 +9,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>delcEVENTS</title>
-<script src="https://delcdata.github.io/DELCAppsHub/delc-kit.js?v=1"></script>
+<script src="https://delcdata.github.io/DELCAppsHub/delc-kit.js?v=2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Lato',sans-serif;background:#f5ede0;color:#1a1a1a;min-height:100vh}
@@ -418,6 +418,15 @@ tbody tr:last-child td{border-bottom:none}
 /* phones: name and buttons on the first row, the tabs on their own full-width row underneath */
 @media(max-width:700px){.top-nav{flex-wrap:wrap!important;row-gap:8px}.top-nav .brand{margin-right:0}.top-nav .nspacer{flex:1}.top-nav .seg{order:20;flex:1 0 100%;justify-content:space-between}.top-nav .seg>*{flex:1}.nav-apps{padding:6px 8px}}
 @media(max-width:480px){.top-nav{gap:5px!important;padding-left:12px!important;padding-right:12px!important}.brand .delc-wm{font-size:16px}.top-nav .nav-out{padding-left:8px!important;padding-right:8px!important}}
+
+/* shared header buttons (2026-11-14) — same look in every delcAPP; delc-kit.js carries the full rule, this is the fallback */
+.delc-hbtn{background:rgba(255,255,255,.12);border:0;color:#fff;border-radius:8px;padding:5px 11px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap;cursor:pointer}.delc-hbtn.pri{background:#fff;color:#1B3254}
+/* one header layout in every delcAPP: name and buttons on the first row, tabs on a second row; solid navy; no gold */
+.top-nav{background:#1B3254!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;flex-wrap:wrap!important;row-gap:8px}
+.top-nav .brand{margin-right:0}.top-nav .brand .delc-wm{font-size:19px}.top-nav .nspacer{flex:1}
+.top-nav .seg{order:20;flex:1 0 100%}
+.top-nav .nuser .avatar{display:none}.top-nav .nuser .un{color:#fff;opacity:.85;font-size:13px}
+@media(max-width:700px){.top-nav .seg{justify-content:space-between}.top-nav .seg>*{flex:1}}
 </style>
 <script src="https://delcdata.github.io/DELCAppsHub/shared-auth.js"></script>
 </head>
@@ -451,11 +460,11 @@ tbody tr:last-child td{border-bottom:none}
     <div class="seg" id="tabs"></div>
     <span class="nspacer"></span>
     <span class="save-chip" id="save-chip">&#9729; Auto-save on</span>
-    <button class="nav-out" id="nav-data-btn" onclick="openData()" title="Data &amp; backups">&#128196;<span> Data</span></button>
-    <button class="btn btn-gold btn-sm" id="nav-new-btn" onclick="openNewEvent()" style="padding:7px 14px">+<span> New event</span></button>
+    <button class="nav-out delc-hbtn" id="nav-data-btn" onclick="openData()" title="Data &amp; backups">&#128196;<span> Data</span></button>
+    <button class="delc-hbtn pri" id="nav-new-btn" onclick="openNewEvent()">+<span> New event</span></button>
     <span class="nuser"><span class="avatar" id="nav-avatar"></span><span class="un" id="nav-user"></span></span>
-    <a class="nav-apps" href="https://delcdata.github.io/DELCAppsHub/" title="Back to the DELC Apps Hub">Apps</a>
-    <button class="nav-out" onclick="doLogout()">Sign out</button>
+    <a class="nav-apps delc-hbtn" href="https://delcdata.github.io/DELCAppsHub/" title="Back to the DELC Apps Hub">Apps</a>
+    <button class="nav-out delc-hbtn" onclick="doLogout()">Sign out</button>
   </div>
   <div id="view-dash"><div id="wrap">
     <div id="panel-overview" class="panel"></div>
