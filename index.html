@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  DELC Food & Beverage 2026 Portal — GitHub Pages + Supabase edition
+  delcEVENTS (food & beverage events) — GitHub Pages + Supabase edition
   Set SUPABASE_URL and SUPABASE_ANON_KEY below (near the top of the main <script> tag)
   before deploying. See the setup guide for step-by-step instructions.
 -->
@@ -8,13 +8,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DELC Food &amp; Beverage 2026</title>
-<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+<title>delcEVENTS</title>
+<script src="https://delcdata.github.io/DELCAppsHub/delc-kit.js?v=1"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Lato',sans-serif;background:#f5ede0;color:#1a1a1a;min-height:100vh}
 :root{
-  --navy:#1a3355;--navyD:#122440;--gold:#c9973a;--cream:#fdf8f2;
+  --navy:#1B3254;--navyD:#14273F;--gold:#C8973A;--cream:#fdf8f2;
   --sand:#f5ede0;--border:#e4d8c8;--muted:#7a6a55;--green:#1a6e3c;--red:#b91c1c;
 }
 .btn{font-family:inherit;border-radius:8px;padding:7px 14px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-weight:700;border:1px solid var(--border);background:#fff;color:#1a1a1a;transition:opacity .15s}
@@ -28,7 +28,7 @@ body{font-family:'Lato',sans-serif;background:#f5ede0;color:#1a1a1a;min-height:1
 .inp:focus{border-color:var(--gold)}
 .lbl{font-size:11px;color:var(--muted);margin-bottom:4px;display:block;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
 .card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 18px}
-#login-screen{min-height:100vh;background:linear-gradient(rgba(18,36,64,.86),rgba(18,36,64,.93)),url('https://storage1.snappages.site/GKKB9P/assets/images/22750931_1920x1080_500.png') center/cover no-repeat;display:flex;align-items:center;justify-content:center;padding:20px}
+#login-screen{min-height:100vh;background:linear-gradient(rgba(20,39,63,.86),rgba(20,39,63,.93)),url('https://storage1.snappages.site/GKKB9P/assets/images/22750931_1920x1080_500.png') center/cover no-repeat;display:flex;align-items:center;justify-content:center;padding:20px}
 .login-box{background:rgba(255,255,255,.97);border-radius:20px;padding:36px;box-shadow:0 24px 60px rgba(0,0,0,.4);width:100%;max-width:420px}
 .login-divider{height:3px;background:linear-gradient(90deg,var(--navy),var(--gold));border-radius:2px;width:60px;margin:0 auto 14px}
 .login-title{font-size:20px;font-weight:900;color:var(--navy);text-align:center;letter-spacing:-.5px;margin-bottom:4px}
@@ -75,7 +75,7 @@ th.r{text-align:right}
 td{padding:6px 8px;border-bottom:1px solid var(--sand)}
 td.r{text-align:right}
 tr:hover td{background:var(--cream);cursor:pointer}
-.backdrop{position:fixed;inset:0;background:rgba(18,36,64,.58);display:flex;align-items:flex-start;justify-content:center;z-index:100;overflow-y:auto;padding:20px 16px}
+.backdrop{position:fixed;inset:0;background:rgba(20,39,63,.58);display:flex;align-items:flex-start;justify-content:center;z-index:100;overflow-y:auto;padding:20px 16px}
 .modal{background:#fff;border-radius:16px;border:1px solid var(--border);width:100%;max-width:680px;padding:20px 22px}
 .modal-sm{max-width:400px;text-align:center}
 .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:14px;border-bottom:3px solid var(--gold)}
@@ -112,7 +112,7 @@ tr:hover td{background:var(--cream);cursor:pointer}
 
 /* ── Apple-style layer (keeps DELC navy / gold / cream palette) ── */
 :root{--bg:#F6F2EB;--fill:rgba(118,104,85,.10);--fill-2:rgba(118,104,85,.17);--sep:rgba(60,50,40,.12);--label:#1C1C1E;--label-2:rgba(60,50,40,.62);--r-lg:18px;--r-md:12px;--shadow:0 1px 2px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.05);--ease:cubic-bezier(.32,.72,0,1)}
-body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue","Segoe UI Variable","Segoe UI",Lato,system-ui,sans-serif;background:var(--bg);color:var(--label);-webkit-font-smoothing:antialiased;letter-spacing:-.01em}
+body{font-family:var(--delc-body,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif);background:var(--bg);color:var(--label);-webkit-font-smoothing:antialiased;letter-spacing:-.01em}
 .btn{border-radius:980px;padding:8px 16px;font-size:13px;font-weight:600;border:none;background:var(--fill);color:var(--navy);transition:transform .15s var(--ease),background .15s,filter .15s}
 .btn:hover{opacity:1;background:var(--fill-2)}
 .btn:active{transform:scale(.96)}
@@ -122,7 +122,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
 .btn-green{background:rgba(52,199,89,.14);color:var(--green)}
 .btn-warn{background:rgba(255,149,0,.14);color:#b45309}
 .inp{border:1px solid transparent;border-radius:var(--r-md);padding:10px 13px;font-size:14px;background:var(--fill);transition:background .2s,box-shadow .2s,border-color .2s}
-.inp:focus{background:#fff;border-color:var(--navy);box-shadow:0 0 0 4px rgba(26,51,85,.12)}
+.inp:focus{background:#fff;border-color:var(--navy);box-shadow:0 0 0 4px rgba(27,50,84,.12)}
 .lbl{font-size:12px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--label-2);margin-left:3px}
 .card{border:none;border-radius:var(--r-lg);padding:18px 20px;box-shadow:var(--shadow)}
 #login-screen{background:radial-gradient(1100px 600px at 15% -10%,#2C4A78 0%,transparent 60%),radial-gradient(900px 500px at 110% 110%,rgba(201,151,58,.35) 0%,transparent 55%),var(--navy)}
@@ -131,7 +131,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
 .login-divider::after{content:"🍽";display:grid;place-items:center;height:100%;font-size:30px}
 .login-title{font-size:26px;font-weight:700;letter-spacing:-.03em;color:var(--label)}
 .login-sub{font-size:14px;color:var(--label-2)}
-.top-nav{background:rgba(26,51,85,.86);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);position:sticky;top:0;z-index:50;min-height:56px;border-bottom:.5px solid rgba(255,255,255,.12)}
+.top-nav{background:rgba(27,50,84,.86);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);position:sticky;top:0;z-index:50;min-height:56px;border-bottom:.5px solid rgba(255,255,255,.12)}
 .nav-title{font-size:16px;font-weight:600;letter-spacing:-.02em}
 .nav-btn{background:rgba(255,255,255,.12);border:none;color:#fff}
 .nav-btn:hover{background:rgba(255,255,255,.2)}
@@ -157,7 +157,7 @@ a.btn{text-decoration:none}
 .ec-actions{border-top:.5px solid var(--sep)}
 th{font-size:11px;font-weight:600;color:var(--label-2);border-bottom:.5px solid var(--sep);padding:9px 10px}
 td{border-bottom:.5px solid var(--sep);padding:10px;font-size:13px}
-tr:hover td{background:rgba(26,51,85,.035)}
+tr:hover td{background:rgba(27,50,84,.035)}
 .backdrop{background:rgba(0,0,0,.32);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .modal{border:none;border-radius:22px;box-shadow:0 24px 70px rgba(0,0,0,.3);animation:fbSheet .4s var(--ease)}
 @keyframes fbSheet{from{opacity:0;transform:translateY(24px) scale(.98)}to{opacity:1;transform:none}}
@@ -384,7 +384,7 @@ tbody tr:last-child td{border-bottom:none}
 .sd-x{width:30px;height:30px;border-radius:50%;border:none;background:var(--fill);color:var(--label-2);cursor:pointer;font-size:15px;font-weight:600;flex-shrink:0;font-family:inherit}
 .sd-x:hover{background:var(--fill-2);color:var(--label)}
 .sd-people{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.pchip{display:inline-flex;align-items:center;gap:4px;background:color-mix(in srgb,var(--c,#1a3355) 13%,#fff);color:var(--label);border-radius:980px;padding:4px 4px 4px 11px;font-size:13px;font-weight:500}
+.pchip{display:inline-flex;align-items:center;gap:4px;background:color-mix(in srgb,var(--c,#1B3254) 13%,#fff);color:var(--label);border-radius:980px;padding:4px 4px 4px 11px;font-size:13px;font-weight:500}
 .pchip button{border:none;background:transparent;color:var(--label-2);cursor:pointer;font-size:15px;line-height:1;width:20px;height:20px;border-radius:50%}
 .pchip button:hover{background:rgba(0,0,0,.08)}
 .pchip.clash{background:rgba(255,149,0,.16);color:#8a4a06}
@@ -407,7 +407,17 @@ tbody tr:last-child td{border-bottom:none}
 }
 #panel-volunteers td a{color:var(--navy);text-decoration:none;font-weight:500}#panel-volunteers td a:hover{text-decoration:underline}
 
-@media print{body>*{display:none!important}#print-overlay{display:block!important;position:static!important;padding:.3in}}
+@media print{body>*{display:none!important}#print-overlay{display:block!important;position:static!important;padding:0}}
+@page{margin:.5in}
+/* shared delc look (2026-11-13): wordmark, sign-in card, Apps button. Fallbacks below keep it readable if delc-kit.js can't load. */
+.delc-wm{display:inline-flex;align-items:baseline;font-weight:800;letter-spacing:-.01em;color:#fff;white-space:nowrap}.delc-wm b{color:#84c225;font-weight:800}.delc-wm.pill{background:var(--navy);border-radius:8px;padding:3px 10px}
+.brand .delc-wm{font-size:19px}
+.login-brand{text-align:center;margin-bottom:14px}.login-brand .delc-wm{font-size:22px}
+.login-title,.pt,.modal-title{font-family:var(--delc-display,inherit)}
+.nav-apps{color:#fff;background:rgba(255,255,255,.14);border-radius:8px;padding:6px 11px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap}.nav-apps:hover{background:rgba(255,255,255,.24)}
+/* phones: name and buttons on the first row, the tabs on their own full-width row underneath */
+@media(max-width:700px){.top-nav{flex-wrap:wrap!important;row-gap:8px}.top-nav .brand{margin-right:0}.top-nav .nspacer{flex:1}.top-nav .seg{order:20;flex:1 0 100%;justify-content:space-between}.top-nav .seg>*{flex:1}.nav-apps{padding:6px 8px}}
+@media(max-width:480px){.top-nav{gap:5px!important;padding-left:12px!important;padding-right:12px!important}.brand .delc-wm{font-size:16px}.top-nav .nav-out{padding-left:8px!important;padding-right:8px!important}}
 </style>
 <script src="https://delcdata.github.io/DELCAppsHub/shared-auth.js"></script>
 </head>
@@ -415,36 +425,37 @@ tbody tr:last-child td{border-bottom:none}
 
 <div id="login-screen">
   <div class="login-box" id="login-box">
-    <div class="login-divider"></div>
-    <div class="login-title">Food &amp; Beverage Portal</div>
-    <div class="login-sub">Service &amp; Hospitality Team &middot; 2026</div>
+    <div class="login-brand"><div id="login-logo"></div><span class="delc-wm pill">delc<b>EVENTS</b></span></div>
+    <div class="login-title">Sign in</div>
+    <div class="login-sub">Food &amp; beverage events &middot; Service &amp; Hospitality Team<br>Use your DELC Apps account — the same username and password as the DELC Apps Hub.</div>
     <div id="login-error" class="login-error" style="display:none"></div>
     <div style="margin-bottom:14px">
       <label class="lbl">Username</label>
       <input class="inp" id="login-user" placeholder="e.g. ddetrich" autocomplete="username">
-      <div style="font-size:11px;color:var(--muted);margin-top:4px">First initial + last name, no spaces</div>
+
     </div>
     <div style="margin-bottom:20px">
       <label class="lbl">Password</label>
-      <input class="inp" id="login-pass" type="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password">
+      <input class="inp" id="login-pass" type="password" autocomplete="current-password">
     </div>
-    <button class="btn btn-primary" style="width:100%;padding:14px;font-size:16px;justify-content:center" onclick="doLogin()">Sign In</button>
+    <button class="btn btn-primary" style="width:100%;padding:14px;font-size:16px;justify-content:center" onclick="doLogin()">Sign in</button>
     <div style="text-align:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
-      <a href="https://mydelc.org" target="_blank" style="font-size:11px;color:var(--muted);text-decoration:none">mydelc.org</a>
+      <a href="https://delcdata.github.io/DELCAppsHub/" style="font-size:13px;color:var(--navy);font-weight:700">DELC Apps Hub</a>
     </div>
   </div>
 </div>
 
 <div id="app-screen" style="display:none;flex-direction:column;min-height:100vh">
   <div class="top-nav" id="top-nav">
-    <span class="brand"><span class="dot">🍽</span><span class="bt">Food &amp; Beverage</span></span>
+    <span class="brand"><span class="delc-wm">delc<b>EVENTS</b></span></span>
     <div class="seg" id="tabs"></div>
     <span class="nspacer"></span>
     <span class="save-chip" id="save-chip">&#9729; Auto-save on</span>
     <button class="nav-out" id="nav-data-btn" onclick="openData()" title="Data &amp; backups">&#128196;<span> Data</span></button>
     <button class="btn btn-gold btn-sm" id="nav-new-btn" onclick="openNewEvent()" style="padding:7px 14px">+<span> New event</span></button>
     <span class="nuser"><span class="avatar" id="nav-avatar"></span><span class="un" id="nav-user"></span></span>
-    <button class="nav-out" onclick="doLogout()">Sign Out</button>
+    <a class="nav-apps" href="https://delcdata.github.io/DELCAppsHub/" title="Back to the DELC Apps Hub">Apps</a>
+    <button class="nav-out" onclick="doLogout()">Sign out</button>
   </div>
   <div id="view-dash"><div id="wrap">
     <div id="panel-overview" class="panel"></div>
@@ -512,8 +523,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const SUPABASE_CONFIGURED = !SUPABASE_URL.includes("YOUR_SUPABASE") && !SUPABASE_ANON_KEY.includes("YOUR_SUPABASE");
 </script>
 <script>
-const PASS="Delc.1200!";
-const C={navy:"#1a3355",gold:"#c9973a",cream:"#fdf8f2",sand:"#f5ede0",border:"#e4d8c8",muted:"#7a6a55",green:"#1a6e3c",red:"#b91c1c"};
+const C={navy:"#1B3254",gold:"#C8973A",cream:"#fdf8f2",sand:"#f5ede0",border:"#e4d8c8",muted:"#7a6a55",green:"#1a6e3c",red:"#b91c1c"};
 const typeColor=t=>({Mug:C.green,Dinner:C.navy,Craft:C.gold,"Craft Event":C.gold,Luncheon:"#7e3a8a",Breakfast:"#c05c1a",Funeral:"#4b4b4b","Community Outreach":"#0f766e","Community Event":"#1d6fa5",Other:C.muted}[t]||C.muted);
 const typeBg=t=>({Mug:"#e6f4ed",Dinner:"#e8eef7",Craft:"#fef3e2","Craft Event":"#fef3e2",Luncheon:"#f5eaf8",Breakfast:"#fdf0e8",Funeral:"#ececec","Community Outreach":"#e3f4f2","Community Event":"#e6f1f9",Other:"#f2ede8"}[t]||"#f2ede8");
 const statusColor=s=>({Scheduled:C.navy,Planning:"#7e3a8a",Pending:"#c05c1a",Completed:C.green}[s]||C.muted);
@@ -602,40 +612,69 @@ async function loadAll(){
     const {data,error}=await sb.from('events').select('*').order('date',{ascending:true});
     if(error)throw error;
     if(data&&data.length){
-      events=data.map(rowToEvent);
+      events=data.map(rowToEvent);snapAll();
     }else{
       events=JSON.parse(JSON.stringify(SEED));
       await saveAll();
     }
   }catch(err){
     console.error("loadAll",err);
-    events=JSON.parse(JSON.stringify(SEED));
-    setSaveStatus("error");
+    events=[];loadFailed=true;
+    setSaveStatus("error");showToast("Couldn’t load the events — check the connection and reload","err");
   }
   await loadRoster();
   await loadBackupsOnly();
 }
 
+/* SNAP = each event exactly as the database had it when this browser last loaded or saved it.
+   A save sends only the events changed here, and deletes only events deleted here — so two people working
+   at once no longer overwrite each other, and an event someone else just added is never removed. */
+let SNAP=new Map(),saveBusy=false,saveAgain=false,loadFailed=false;
+const rowKey=r=>JSON.stringify(r);
+function snapAll(){SNAP=new Map();events.forEach(e=>SNAP.set(e.id,rowKey(eventToRow(e))));}
+function hasUnsaved(){const ids=new Set(events.map(e=>e.id));return events.some(e=>SNAP.get(e.id)!==rowKey(eventToRow(e)))||[...SNAP.keys()].some(id=>!ids.has(id));}
 async function saveAll(){
-  setSaveStatus("saving");
+  if(loadFailed){setSaveStatus("error");showToast("Not saved — the event list didn’t load. Reload the page.","err");return;}
+  if(saveBusy){saveAgain=true;return;}
+  saveBusy=true;setSaveStatus("saving");
   try{
-    if(events.length){
-      const {error:upErr}=await sb.from('events').upsert(events.map(eventToRow));
-      if(upErr)throw upErr;
-    }
-    const {data:existingRows,error:selErr}=await sb.from('events').select('id');
-    if(selErr)throw selErr;
-    const localIds=new Set(events.map(e=>e.id));
-    const toDelete=(existingRows||[]).map(r=>r.id).filter(id=>!localIds.has(id));
-    if(toDelete.length){
-      const {error:delErr}=await sb.from('events').delete().in('id',toDelete);
-      if(delErr)throw delErr;
-    }
+    const rows=events.map(eventToRow),ids=new Set(rows.map(r=>r.id));
+    const up=rows.filter(r=>SNAP.get(r.id)!==rowKey(r));
+    const gone=[...SNAP.keys()].filter(id=>!ids.has(id));
+    if(up.length){const {error:upErr}=await sb.from('events').upsert(up);if(upErr)throw upErr;up.forEach(r=>SNAP.set(r.id,rowKey(r)));}
+    if(gone.length){const {error:delErr}=await sb.from('events').delete().in('id',gone);if(delErr)throw delErr;gone.forEach(id=>SNAP.delete(id));}
     setSaveStatus("saved");setTimeout(()=>setSaveStatus("idle"),2000);
   }catch(err){
     console.error("saveAll",err);
-    setSaveStatus("error");
-  }
+    setSaveStatus("error");showToast("That change didn’t save — check the connection","err");
+  }finally{saveBusy=false;if(saveAgain){saveAgain=false;saveAll();}}
+}
+/* pick up other people's changes when you come back to the tab, and once a minute while it is open */
+function busyEditing(){
+  if(editingEvent||SD||saveBusy||loadFailed)return true;
+  if(document.getElementById("app-screen").style.display==="none")return true;
+  if(["form-modal","data-modal","confirm-modal","sched-modal","print-overlay"].some(id=>{const el=document.getElementById(id);return el&&el.style.display&&el.style.display!=="none";}))return true;
+  if(document.getElementById("nv-ov"))return true;
+  const a=document.activeElement;return !!(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName));
+}
+let refreshing=false;
+async function refreshFromServer(){
+  if(!SUPABASE_CONFIGURED||refreshing||document.visibilityState!=="visible"||busyEditing()||hasUnsaved())return;
+  refreshing=true;
+  try{
+    const {data,error}=await sb.from('events').select('*').order('date',{ascending:true});
+    if(error||!data||busyEditing()||hasUnsaved())return;
+    const before=JSON.stringify(events.map(eventToRow))+"|"+JSON.stringify(VOLS)+"|"+TEMPLATES.length;
+    const fresh=data.map(rowToEvent);
+    await loadRoster();
+    if(busyEditing()||hasUnsaved())return;
+    events=fresh;snapAll();
+    if(before===JSON.stringify(events.map(eventToRow))+"|"+JSON.stringify(VOLS)+"|"+TEMPLATES.length)return;
+    const det=document.getElementById("view-detail");
+    if(det&&det.style.display!=="none"&&currentEventId!=null){const e=events.find(x=>x.id===currentEventId);if(e)renderDetail(e);else{showDash();showToast("That event was removed by someone else");}}
+    else setTab(activeTab);
+  }catch(err){console.warn("refresh",err);}
+  finally{refreshing=false;}
 }
 
 function showConfigError(){
@@ -661,18 +700,30 @@ function showToast(msg,type){
 document.getElementById("login-pass").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
 document.getElementById("login-user").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
 
-function doLogin(){
+function enterApp(sess){
+  currentUsername=sess.username;
+  document.getElementById("login-screen").style.display="none";
+  document.getElementById("app-screen").style.display="flex";
+  const nm=sess.displayName||sess.username;
+  document.getElementById("nav-user").textContent=nm;document.getElementById("nav-avatar").textContent=nm.split(/\s+/).map(w=>w[0]).join("").slice(0,2);
+}
+let loginBusy=false;
+async function doLogin(){
+  if(loginBusy)return;
   const u=document.getElementById("login-user").value.trim().toLowerCase();
   const p=document.getElementById("login-pass").value;
   const err=document.getElementById("login-error");
   const box=document.getElementById("login-box");
-  if(!u){err.textContent="Please enter your username (e.g. ddetrich)";err.style.display="block";return;}
-  if(p!==PASS){err.textContent="Incorrect password. Please try again.";err.style.display="block";box.classList.add("shake");setTimeout(()=>box.classList.remove("shake"),500);return;}
-  currentUsername=u;
-  document.getElementById("login-screen").style.display="none";
-  document.getElementById("app-screen").style.display="flex";
-  document.getElementById("nav-user").textContent=u;document.getElementById("nav-avatar").textContent=u.slice(0,2);
-  setTab("overview");
+  const say=m=>{err.textContent=m;err.style.display="block";};
+  if(!u||!p){say("Enter your username and password.");return;}
+  if(typeof DelcAuth==="undefined"){say("The sign-in service didn’t load. Check the internet connection and reload.");return;}
+  loginBusy=true;let res;
+  try{res=await DelcAuth.login(u,p);}catch(_){res={ok:false,error:"Could not reach the sign-in service. Try again."};}
+  loginBusy=false;
+  if(!res||!res.ok){say((res&&res.error)||"That username or password isn’t right.");box.classList.add("shake");setTimeout(()=>box.classList.remove("shake"),500);return;}
+  const sess=res.session||DelcAuth.getSession();
+  if(!DelcAuth.hasAppAccess(sess,"fb")){say("Your account doesn’t have delcEVENTS yet. Ask an admin to turn it on in the Admin Portal.");return;}
+  err.style.display="none";enterApp(sess);setTab("overview");refreshFromServer();
 }
 
 function doLogout(){
@@ -1064,7 +1115,7 @@ function renderForm(){
     </div>`).join("");
   document.getElementById("form-inner").innerHTML=`
     <div class="modal-header">
-      <div><div class="modal-eyebrow">DELC Food & Beverage</div><h2 class="modal-title">${isNew?"New Event":"Edit — "+e.name}</h2></div>
+      <div><div class="modal-eyebrow">delcEVENTS</div><h2 class="modal-title">${isNew?"New Event":"Edit — "+e.name}</h2></div>
       <button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:22px;line-height:1" onclick="closeForm()">×</button>
     </div>
     <div class="form-grid">
@@ -1155,8 +1206,6 @@ function closeForm(){document.getElementById("form-modal").style.display="none";
 
 function printReport(id){
   const e=events.find(x=>x.id===id);if(!e)return;
-  const logoEl=document.querySelector('.top-nav img');
-  const logoSrc=logoEl?logoEl.src:'';
   const att=tA(e),o=e.offering||emptyOffer(),ic=e.financials.totalIncome>=0?"#1a6e3c":"#b91c1c";
   const cashT=[["hundreds",100],["fifties",50],["twenties",20],["tens",10],["fives",5],["ones",1]].reduce((s,[k,m])=>s+(o[k]||0)*m,0)+(+o.coin||0);
   const offerGrand=offerTotal(o);
@@ -1175,12 +1224,12 @@ function printReport(id){
   <style>
     #print-overlay *{box-sizing:border-box}
     #print-overlay{font-family:'Helvetica Neue',Arial,sans-serif;color:#1a1a1a;font-size:11pt;background:#fff}
-    #print-overlay .rh{display:flex;align-items:center;gap:18px;padding-bottom:14px;border-bottom:3px solid #1a3355;margin-bottom:18px}
+    #print-overlay .rh{display:flex;align-items:center;gap:18px;padding-bottom:14px;border-bottom:3px solid #1B3254;margin-bottom:18px}
     #print-overlay .rlogo{height:64px;width:64px;object-fit:contain}
     #print-overlay .rdiv{width:1px;height:60px;background:#e4d8c8}
     #print-overlay .rtb{flex:1}
     #print-overlay .rorg{font-size:10pt;color:#7a6a55;font-weight:700}
-    #print-overlay .rname{font-size:20pt;font-weight:900;color:#1a3355;letter-spacing:-.5px;line-height:1.1}
+    #print-overlay .rname{font-size:20pt;font-weight:900;color:#1B3254;letter-spacing:-.5px;line-height:1.1}
     #print-overlay .rmeta{font-size:9pt;color:#7a6a55;margin-top:4px}
     #print-overlay .rbadge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:9pt;font-weight:700}
     #print-overlay .net-box{display:flex;align-items:center;justify-content:center;gap:18px;background:#f5ede0;border:2px solid #e4d8c8;border-radius:10px;padding:12px 20px;margin-bottom:18px}
@@ -1195,34 +1244,26 @@ function printReport(id){
     #print-overlay .sbt{font-size:8pt;font-weight:700;color:#7a6a55;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
     #print-overlay .row{display:flex;justify-content:space-between;font-size:10pt;padding:2px 0;border-bottom:1px dotted #e4d8c8}
     #print-overlay .row:last-child{border-bottom:none}
-    #print-overlay .row.sep{border-top:1.5px solid #c9973a;margin-top:4px;padding-top:5px;font-weight:700}
+    #print-overlay .row.sep{border-top:1.5px solid #C8973A;margin-top:4px;padding-top:5px;font-weight:700}
     #print-overlay table{width:100%;border-collapse:collapse;font-size:9.5pt}
-    #print-overlay th{text-align:left;font-size:8pt;font-weight:700;color:#7a6a55;padding:4px 6px;border-bottom:2px solid #1a3355;text-transform:uppercase;letter-spacing:.04em;background:#f5ede0}
+    #print-overlay th{text-align:left;font-size:8pt;font-weight:700;color:#7a6a55;padding:4px 6px;border-bottom:2px solid #1B3254;text-transform:uppercase;letter-spacing:.04em;background:#f5ede0}
     #print-overlay th.r,#print-overlay td.r{text-align:right}
     #print-overlay th.c,#print-overlay td.c{text-align:center}
     #print-overlay td{padding:5px 6px;border-bottom:1px solid #f5ede0}
     #print-overlay tr:nth-child(even) td{background:#fdf8f2}
-    #print-overlay tr.total-row td{background:#e8eef7;font-weight:700;border-top:2px solid #1a3355}
+    #print-overlay tr.total-row td{background:#e8eef7;font-weight:700;border-top:2px solid #1B3254}
 
-    #print-overlay tr.grand td{background:#1a3355;color:#fff;font-size:11pt}
+    #print-overlay tr.grand td{background:#1B3254;color:#fff;font-size:11pt}
     #print-overlay .tg{display:grid;grid-template-columns:1fr 1fr;gap:16px}
     #print-overlay .menu-box{background:#fdf8f2;border:1px solid #e4d8c8;border-radius:8px;padding:10px 14px;font-size:10pt;line-height:1.5}
     #print-overlay .rf{margin-top:24px;padding-top:10px;border-top:1px solid #e4d8c8;font-size:8pt;color:#7a6a55;display:flex;justify-content:space-between}
-    #print-overlay .close-btn{position:fixed;top:16px;right:20px;background:#1a3355;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer;z-index:10000}
+    #print-overlay .close-btn{position:fixed;top:16px;right:20px;background:#1B3254;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer;z-index:10000}
     @media print{#print-overlay .close-btn{display:none}}
   </style>
   <button class="close-btn" onclick="closePrintOverlay()">✕ Close</button>
-  <div class="rh">
-    ${logoSrc?`<img src="${logoSrc}" class="rlogo" alt="DELC">`:'<div style="font-size:26px;font-weight:900;color:#1a3355">DELC</div>'}
-    <div class="rdiv"></div>
-    <div class="rtb">
-      <div class="rorg">DELC Food &amp; Beverage — Service &amp; Hospitality Team</div>
-      <div class="rname">${e.name}</div>
-      <div class="rmeta">${fD(e.date)} &nbsp;·&nbsp; <span class="rbadge" style="background:${typeBg(e.type)};color:${typeColor(e.type)}">${e.type}</span>${e.menu?' &nbsp;·&nbsp; Menu on file':''}</div>
-    </div>
-  </div>
+  ${window.DELC?DELC.letterhead({title:e.name,sub:fD(e.date)+" · "+e.type+(e.menu?" · Menu on file":""),right:"Event report<br>Service &amp; Hospitality"}):`<div class="rh"><div style="font-size:26px;font-weight:900;color:#1B3254">DELC</div><div class="rdiv"></div><div class="rtb"><div class="rorg">Duncansville Evangelical Lutheran Church — Service &amp; Hospitality</div><div class="rname">${hEsc(e.name)}</div><div class="rmeta">${fD(e.date)} · ${hEsc(e.type)}</div></div></div>`}
   <div class="net-box">
-    <div class="ni"><div class="nl">Attendance</div><div class="nv" style="color:#1a3355">${att||"—"}</div></div>
+    <div class="ni"><div class="nl">Attendance</div><div class="nv" style="color:#1B3254">${att||"—"}</div></div>
     <div class="nd"></div>
     <div class="ni"><div class="nl">Total Cost</div><div class="nv" style="color:#b91c1c">${fC(e.financials.totalCost)}</div></div>
     <div class="nd"></div>
@@ -1261,13 +1302,10 @@ function printReport(id){
     </div>
   </div>
   <div class="sec"><div class="st">Volunteer Schedule${e.startTime?" · Event "+fTR(e.startTime,e.endTime):""}</div>
-    ${evJobs(e).length?evJobs(e).map((j,ji)=>`<div style="font-weight:700;color:#1a3355;margin:8px 0 4px">${hEsc(j.name)}</div><table><thead><tr><th>Time</th><th>Task</th><th>Volunteers</th></tr></thead><tbody>${j.tasks.map(t=>{const open=Math.max(0,(+t.needed||0)-(t.people||[]).length);return `<tr><td style="white-space:nowrap">${fTR(t.start,t.end)}</td><td><strong>${hEsc(t.name)}</strong></td><td>${hEsc((t.people||[]).map(volName).join(", "))||"—"}${open?` <span style="color:#b45309">(${open} open)</span>`:""}</td></tr>`;}).join("")}</tbody></table>`).join(""):`<table><thead><tr><th>Volunteer</th><th class="c">Kitchen Prep</th><th class="c">Kitchen Event</th><th class="c">Hosp. Prep</th><th class="c">Hosp. Event</th></tr></thead>
+    ${evJobs(e).length?evJobs(e).map((j,ji)=>`<div style="font-weight:700;color:#1B3254;margin:8px 0 4px">${hEsc(j.name)}</div><table><thead><tr><th>Time</th><th>Task</th><th>Volunteers</th></tr></thead><tbody>${j.tasks.map(t=>{const open=Math.max(0,(+t.needed||0)-(t.people||[]).length);return `<tr><td style="white-space:nowrap">${fTR(t.start,t.end)}</td><td><strong>${hEsc(t.name)}</strong></td><td>${hEsc((t.people||[]).map(volName).join(", "))||"—"}${open?` <span style="color:#b45309">(${open} open)</span>`:""}</td></tr>`;}).join("")}</tbody></table>`).join(""):`<table><thead><tr><th>Volunteer</th><th class="c">Kitchen Prep</th><th class="c">Kitchen Event</th><th class="c">Hosp. Prep</th><th class="c">Hosp. Event</th></tr></thead>
     <tbody>${volRows}</tbody></table>`}
   </div>
-  <div class="rf">
-    <span>DELC Food &amp; Beverage 2026 — ${e.name}</span>
-    <span>Printed ${new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}</span>
-  </div>`;
+  ${window.DELC?DELC.footer('delcEVENTS',e.name):`<div class="rf"><span>delcEVENTS — ${hEsc(e.name)}</span><span>Printed ${new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}</span></div>`}`;
 
 
   overlay.style.display="block";
@@ -1312,7 +1350,7 @@ function renderDataModal(){
     </div>`).join(""):`<p style="color:var(--muted);font-size:13px;text-align:center;padding:16px 0">No backups yet.</p>`;
   document.getElementById("data-inner").innerHTML=`
     <div class="modal-header">
-      <div><div class="modal-eyebrow">DELC Food & Beverage</div><h2 class="modal-title">Data & Backups</h2></div>
+      <div><div class="modal-eyebrow">delcEVENTS</div><h2 class="modal-title">Data & Backups</h2></div>
       <button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:22px;line-height:1" onclick="closeData()">×</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
@@ -1528,7 +1566,7 @@ function openView(e){
   var rows="";
   evJobs(e).forEach(function(j,ji){j.tasks.forEach(function(t,ti){var open=Math.max(0,(+t.needed||0)-(t.people||[]).length);if(!open)return;
     rows+='<div class="ov-row"><i style="background:'+jobColor(j,ji)+'"></i><div class="ov-what"><b>'+hEsc(t.name||"Task")+'</b><span>'+hEsc(j.name||"Job")+' · '+hEsc(fTR(t.start,t.end))+'</span>'+((t.people||[]).length?'<span>Has: '+hEsc(t.people.map(volName).join(", "))+'</span>':'')+'</div>'+
-      '<span class="ov-need">Needs '+open+' more</span><select class="inp ov-sel" onchange="quickAssign('+e.id+',\''+j.id+'\',\''+t.id+'\',this.value)"><option value="">Assign…</option>'+volOptions(t,e.date,null,null,t.people)+'<option value="__new">+ New volunteer…</option></select></div>';});});
+      '<span class="ov-need">Needs '+open+' more</span><select class="inp ov-sel" onchange="quickAssign('+e.id+',\''+j.id+'\',\''+t.id+'\',this.value)"><option value="">Assign…</option>'+'<option value="__new">+ New volunteer (not on the list)…</option>'+volOptions(t,e.date,null,null,t.people)+'</select></div>';});});
   return rows?'<div class="card">'+rows+'</div>':'<div class="card sc-empty"><div class="sc-empty-t">Every task is fully staffed</div><div class="card-s">Set “Needed” on a task in Edit schedule to track open spots.</div></div>';
 }
 async function quickAssign(evId,jobId,taskId,volId){
@@ -1537,10 +1575,30 @@ async function quickAssign(evId,jobId,taskId,volId){
   e.jobs.forEach(function(j){if(j.id!==jobId)return;j.tasks.forEach(function(t){if(t.id===taskId&&t.people.indexOf(volId)<0)t.people.push(volId);});});
   saveAll();renderDetailContent(e);showToast(volName(volId)+" scheduled");
 }
+function askNewVolunteer(){
+  return new Promise(function(res){
+    var ov=document.createElement("div");ov.id="nv-ov";
+    ov.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px";
+    ov.innerHTML='<div role="dialog" aria-modal="true" style="background:#fff;border-radius:14px;padding:20px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.3)">'+
+      '<div style="font-size:18px;font-weight:700;margin-bottom:4px">New volunteer</div><div class="card-s" style="margin-bottom:12px">Adds them to the roster and to this task.</div>'+
+      '<label class="lbl" for="nv-name">Name</label><input class="inp" id="nv-name" autocomplete="off" style="width:100%">'+
+      '<label class="lbl" for="nv-phone" style="margin-top:10px;display:block">Phone (optional)</label><input class="inp" id="nv-phone" type="tel" autocomplete="off" style="width:100%">'+
+      '<div id="nv-err" style="display:none;color:#b91c1c;font-size:13px;margin-top:8px">Please enter a name.</div>'+
+      '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px"><button class="btn" id="nv-cancel">Cancel</button><button class="btn btn-primary" id="nv-ok">&#10003; Add</button></div></div>';
+    document.body.appendChild(ov);
+    var nm=ov.querySelector("#nv-name"),ph=ov.querySelector("#nv-phone");
+    function done(v){if(ov.parentNode)ov.parentNode.removeChild(ov);res(v);}
+    function ok(){var n=nm.value.trim();if(!n){ov.querySelector("#nv-err").style.display="block";nm.focus();return;}done({name:n,phone:ph.value.trim()});}
+    ov.querySelector("#nv-ok").onclick=ok;ov.querySelector("#nv-cancel").onclick=function(){done(null);};
+    ov.addEventListener("keydown",function(ev){if(ev.key==="Enter"){ev.preventDefault();ok();}else if(ev.key==="Escape"){done(null);}});
+    setTimeout(function(){nm.focus();},30);
+  });
+}
 async function newVolunteerPrompt(){
-  var n=prompt("New volunteer's name");if(!n||!n.trim())return null;n=n.trim();
-  var ex=VOLS.find(function(v){return v.name.toLowerCase()===n.toLowerCase();});if(ex)return ex;
-  var v={id:"v"+sUid(),name:n,phone:"",email:"",teams:"",notes:"",active:true};
+  var r=await askNewVolunteer();if(!r)return null;var n=r.name;
+  var ex=VOLS.find(function(v){return v.name.toLowerCase()===n.toLowerCase();});
+  if(ex){if(ex.active===false){ex.active=true;await saveVol(ex);}return ex;}
+  var v={id:"v"+sUid(),name:n,phone:r.phone||"",email:"",teams:"",notes:"",active:true};
   if(!(await saveVol(v)))return null;VOLS.push(v);VOLS.sort(function(a,b){return a.name.localeCompare(b.name);});return v;
 }
 
@@ -1586,7 +1644,7 @@ function renderSchedEditor(){
         '<label class="sd-need">Need<input class="inp" type="number" min="0" value="'+(+t.needed||0)+'" onchange="sdSet('+ji+','+ti+',\'needed\',parseInt(this.value)||0,1)"></label>'+
         '<button class="sd-x" onclick="sdDelTask('+ji+','+ti+')" aria-label="Remove task">×</button>'+
         '<div class="sd-people">'+chips+(open?'<span class="pchip openc">'+open+' open</span>':'')+
-          '<select class="inp sd-pick" onchange="sdAddPerson('+ji+','+ti+',this.value)"><option value="">+ Add person</option>'+volOptions(t,e.date,SD.jobs,SD_EVENT,t.people)+'<option value="__new">+ New volunteer…</option></select></div>'+
+          '<select class="inp sd-pick" onchange="sdAddPerson('+ji+','+ti+',this.value)"><option value="">+ Add person</option>'+'<option value="__new">+ New volunteer (not on the list)…</option>'+volOptions(t,e.date,SD.jobs,SD_EVENT,t.people)+'</select><button class="btn btn-sm" style="white-space:nowrap" onclick="sdAddPerson('+ji+','+ti+',\'__new\')">+ New person</button></div>'+
       '</div>';}).join("");
     return '<div class="sd-job" style="--c:'+col+'"><div class="sd-jh"><i></i><input class="inp sd-jn" value="'+hEsc(j.name)+'" placeholder="Job name (e.g. Kitchen)" onchange="sdSet('+ji+',null,\'name\',this.value)">'+
       '<button class="sd-x" title="Move up" onclick="sdMoveJob('+ji+',-1)">↑</button><button class="sd-x" title="Move down" onclick="sdMoveJob('+ji+',1)">↓</button><button class="sd-x" onclick="sdDelJob('+ji+')" title="Remove job">×</button></div>'+
@@ -1638,16 +1696,16 @@ function applyTemplate(id){
 
 /* ═════ Printable schedule ═════ */
 function schedPrintCss(){return '<style>#print-overlay *{box-sizing:border-box}#print-overlay{font-family:"Helvetica Neue",Arial,sans-serif;color:#1a1a1a;font-size:10.5pt;background:#fff}'+
-  '#print-overlay .sp-h{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #1a3355;padding-bottom:10px;margin-bottom:14px}'+
-  '#print-overlay .sp-org{font-size:9pt;color:#7a6a55;font-weight:700}#print-overlay .sp-t{font-size:20pt;font-weight:900;color:#1a3355;line-height:1.1}#print-overlay .sp-m{font-size:11pt;margin-top:3px}'+
+  '#print-overlay .sp-h{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #1B3254;padding-bottom:10px;margin-bottom:14px}'+
+  '#print-overlay .sp-org{font-size:9pt;color:#7a6a55;font-weight:700}#print-overlay .sp-t{font-size:20pt;font-weight:900;color:#1B3254;line-height:1.1}#print-overlay .sp-m{font-size:11pt;margin-top:3px}'+
   '#print-overlay .sp-sum{font-size:9.5pt;color:#555;text-align:right;line-height:1.5}'+
-  '#print-overlay h3{font-size:12pt;margin:14px 0 6px;color:#1a3355;display:flex;align-items:center;gap:8px}#print-overlay h3 i{width:10px;height:10px;border-radius:3px;display:inline-block}'+
-  '#print-overlay table{width:100%;border-collapse:collapse}#print-overlay th{text-align:left;font-size:8pt;color:#7a6a55;text-transform:uppercase;letter-spacing:.04em;border-bottom:1.5px solid #1a3355;padding:4px 6px}'+
+  '#print-overlay h3{font-size:12pt;margin:14px 0 6px;color:#1B3254;display:flex;align-items:center;gap:8px}#print-overlay h3 i{width:10px;height:10px;border-radius:3px;display:inline-block}'+
+  '#print-overlay table{width:100%;border-collapse:collapse}#print-overlay th{text-align:left;font-size:8pt;color:#7a6a55;text-transform:uppercase;letter-spacing:.04em;border-bottom:1.5px solid #1B3254;padding:4px 6px}'+
   '#print-overlay td{padding:6px;border-bottom:1px solid #e4d8c8;vertical-align:top}#print-overlay tr{page-break-inside:avoid}'+
   '#print-overlay .ck{display:inline-block;margin:0 14px 3px 0;white-space:nowrap}#print-overlay .ck:before{content:"";display:inline-block;width:11px;height:11px;border:1.3px solid #1a1a1a;border-radius:2px;margin-right:5px;vertical-align:-1px}'+
   '#print-overlay .blank{color:#999}#print-overlay .tm{white-space:nowrap;width:1%}#print-overlay .jt{table-layout:fixed}#print-overlay .jt td:first-child,#print-overlay .jt th:first-child{width:22%}#print-overlay .jt td:nth-child(2),#print-overlay .jt th:nth-child(2){width:28%}'+
   '#print-overlay .rf{margin-top:18px;padding-top:8px;border-top:1px solid #e4d8c8;font-size:8pt;color:#7a6a55;display:flex;justify-content:space-between}'+
-  '#print-overlay .close-btn{position:fixed;top:16px;right:20px;background:#1a3355;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer;z-index:10000}'+
+  '#print-overlay .close-btn{position:fixed;top:16px;right:20px;background:#1B3254;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer;z-index:10000}'+
   '@media print{#print-overlay .close-btn{display:none}}</style>';}
 function schedTablesHtml(e,withCheck){
   return evJobs(e).map(function(j,ji){
@@ -1664,11 +1722,11 @@ function printSchedule(id){
   var people=ps.length?'<h3>By person</h3><table><thead><tr><th>Name</th><th>Phone</th><th>On site</th><th>Tasks</th></tr></thead><tbody>'+ps.map(function(p){var v=p.vol||{};return '<tr><td><b>'+hEsc(p.name)+'</b></td><td class="tm">'+hEsc(v.phone||"")+'</td><td class="tm">'+(p.first!=null?hEsc(fTR(mT(p.first),mT(p.last))):"")+'</td><td>'+p.list.map(function(x){return hEsc(fT(x.task.start)+" "+x.task.name);}).join("; ")+'</td></tr>';}).join("")+'</tbody></table>':"";
   var ov=document.getElementById("print-overlay");
   ov.innerHTML=schedPrintCss()+'<button class="close-btn" onclick="closePrintOverlay()">✕ Close</button>'+
-    '<div class="sp-h"><div><div class="sp-org">Duncansville Evangelical Lutheran Church · Food &amp; Beverage</div><div class="sp-t">'+hEsc(e.name)+' — Volunteer Schedule</div>'+
-    '<div class="sp-m">'+hEsc(new Date(e.date+"T12:00:00").toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"}))+(e.startTime?' · Event '+hEsc(fTR(e.startTime,e.endTime)):'')+'</div></div>'+
-    '<div class="sp-sum">'+s.peopleCount+' volunteers · '+s.tasks+' tasks'+(s.open?'<br><b style="color:#b91c1c">'+s.open+' open slot'+(s.open>1?'s':'')+'</b>':'')+'</div></div>'+
+    (function(){var when=new Date(e.date+"T12:00:00").toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"})+(e.startTime?' · Event '+fTR(e.startTime,e.endTime):'');
+      var sum=s.peopleCount+' volunteers · '+s.tasks+' tasks'+(s.open?'<br><b style="color:#b91c1c">'+s.open+' open slot'+(s.open>1?'s':'')+'</b>':'');
+      return window.DELC?DELC.letterhead({title:e.name+' — Volunteer Schedule',sub:when,right:sum}):'<div class="sp-h"><div><div class="sp-org">Duncansville Evangelical Lutheran Church</div><div class="sp-t">'+hEsc(e.name)+' — Volunteer Schedule</div><div class="sp-m">'+hEsc(when)+'</div></div><div class="sp-sum">'+sum+'</div></div>';})()+
     schedTablesHtml(e,true)+people+
-    '<div class="rf"><span>DELC Food &amp; Beverage — '+hEsc(e.name)+'</span><span>Printed '+new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})+'</span></div>';
+    (window.DELC?DELC.footer('delcEVENTS',e.name):'<div class="rf"><span>delcEVENTS — '+hEsc(e.name)+'</span><span>Printed '+new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})+'</span></div>');
   ov.style.display="block";document.body.style.overflow="hidden";setTimeout(function(){window.print();},300);
 }
 
@@ -1710,13 +1768,12 @@ async function deleteTemplate(id){var t=TEMPLATES.find(function(x){return x.id==
 (async function(){
   const ssoSession=(typeof DelcAuth!=="undefined")?DelcAuth.getSession():null;
   if(ssoSession&&DelcAuth.hasAppAccess(ssoSession,"fb")){
-    currentUsername=ssoSession.username;
-    document.getElementById("login-screen").style.display="none";
-    document.getElementById("app-screen").style.display="flex";
-    document.getElementById("nav-user").textContent=ssoSession.username;document.getElementById("nav-avatar").textContent=ssoSession.username.slice(0,2);
+    enterApp(ssoSession);
   }
+  const ll=document.getElementById("login-logo");if(ll&&window.DELC)ll.innerHTML=DELC.logoImg();
   await loadAll();
   setTab("overview");
+  document.addEventListener("visibilitychange",refreshFromServer);window.addEventListener("focus",refreshFromServer);setInterval(refreshFromServer,60000);
 })();
 </script>
 </body>
