@@ -1041,6 +1041,7 @@ function renderDetailContent(e){
     html=schedTabHtml(e);
   }
   document.getElementById("detail-content").innerHTML=html;
+  if(activeDetailTab==="summary") document.getElementById("detail-content").insertAdjacentHTML("afterbegin",`<span class="delc-changed" data-t="events" data-id="${e.id}" style="margin:0 0 10px"></span>`); // who saved it last (shared-auth.js)
   if(activeDetailTab==="summary") seatForEvent(e.id).then(rows=>{
     const box=document.getElementById("seat-card"); if(!box||currentEventId!==e.id) return;
     box.innerHTML=seatHtml(e,rows);
