@@ -457,6 +457,9 @@ tbody tr:last-child td{border-bottom:none}
 @media(max-width:480px){.top-nav .seg{flex-basis:calc(100% + 24px)!important;margin:6px -12px 0!important}}
 </style>
 <script src="https://delcdata.github.io/DELCAppsHub/shared-auth.js"></script>
+<style id="readable-2026-11-14">/* easier reading (2026-11-14): nothing under 12px, darker faint text */
+html body :is(.ec-stat-label,.type-pill,.ec-stat-val,.pv-av,.save-chip,.tl-open,.tl-tick){font-size:12px!important}
+</style>
 </head>
 <body>
 
@@ -557,9 +560,9 @@ const SUPABASE_CONFIGURED = !SUPABASE_URL.includes("YOUR_SUPABASE") && !SUPABASE
 </script>
 <script>
 const C={navy:"#1B3254",gold:"#B83280",cream:"#f7f9fc",sand:"#eef1f6",border:"#dbe1ea",muted:"#5d6a82",green:"#1a6e3c",red:"#b91c1c"};
-const typeColor=t=>({Mug:C.green,Dinner:C.navy,Craft:C.gold,"Craft Event":C.gold,Luncheon:"#7e3a8a",Breakfast:"#c05c1a",Funeral:"#4b4b4b","Community Outreach":"#0f766e","Community Event":"#1d6fa5",Other:C.muted}[t]||C.muted);
+const typeColor=t=>({Mug:C.green,Dinner:C.navy,Craft:C.gold,"Craft Event":C.gold,Luncheon:"#7e3a8a",Breakfast:"#a14a12",Funeral:"#4b4b4b","Community Outreach":"#0f766e","Community Event":"#1d6fa5",Other:C.muted}[t]||C.muted);
 const typeBg=t=>({Mug:"#e6f4ed",Dinner:"#e8eef7",Craft:"#f8e7f0","Craft Event":"#f8e7f0",Luncheon:"#f5eaf8",Breakfast:"#fdf0e8",Funeral:"#ececec","Community Outreach":"#e3f4f2","Community Event":"#e6f1f9",Other:"#f2ede8"}[t]||"#f2ede8");
-const statusColor=s=>({Scheduled:C.navy,Planning:"#7e3a8a",Pending:"#c05c1a",Completed:C.green}[s]||C.muted);
+const statusColor=s=>({Scheduled:C.navy,Planning:"#7e3a8a",Pending:"#a14a12",Completed:C.green}[s]||C.muted);
 const statusBg=s=>({Scheduled:"#e8eef7",Planning:"#f5eaf8",Pending:"#fdf0e8",Completed:"#e6f4ed"}[s]||"#f2ede8");
 const statusPill=s=>s?`<span class="type-pill" style="background:${statusBg(s)};color:${statusColor(s)}">${s}</span>`:"";
 
