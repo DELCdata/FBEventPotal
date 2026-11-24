@@ -1894,6 +1894,27 @@ async function budgetSetMap(i,v){
   catch(e){console.warn(e);budgetMapState="error";alert("Couldn’t save that change for everyone — check your connection and try again.");}
   renderBudget();
 }
+
+/* months (or years, when "All years") as columns — 2026-11-23 */
+var BUD_MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function budgetMonthsOn(){return budgetState.months!==false;}
+function budgetCols(d){if(d.y==="all")return budgetYears().slice().reverse().map(function(y){return {k:y,l:y};});return BUD_MON.map(function(l,i){return {k:String(i+1).padStart(2,"0"),l:l};});}
+function budgetColOf(e,d){return d.y==="all"?(e.date||"").slice(0,4):(e.date||"").slice(5,7);}
+function budgetSplit(evs,d,cols){var o={};cols.forEach(function(c){o[c.k]=0;});evs.forEach(function(e){var k=budgetColOf(e,d);if(k in o)o[k]+=budgetCost(e);});return o;}
+function fWhole(v){return (v<0?"-$":"$")+Math.round(Math.abs(v)).toLocaleString("en-US");}
+function budgetCell(v){return Math.round(v)===0?'<span class="bud-z">—</span>':fWhole(v);}
+function budgetMonthTable(d){
+  var cols=budgetCols(d),allEv=[];d.groups.forEach(function(g){g.rows.forEach(function(r){allEv=allEv.concat(r.ev);});});
+  var tot=budgetSplit(allEv,d,cols);
+  var tds=function(o){return cols.map(function(c){return '<td class="r num">'+budgetCell(o[c.k])+'</td>';}).join("");};
+  var body=d.groups.map(function(g){var gev=[];g.rows.forEach(function(r){gev=gev.concat(r.ev);});
+    var head='<tr class="bud-grow"><td>'+hEsc(g.budget)+(g.budget==="Not assigned"?"":" budget")+'</td>'+tds(budgetSplit(gev,d,cols))+'<td class="r num">'+fWhole(g.cost)+'</td></tr>';
+    return head+g.rows.map(function(r){var open=!!budgetOpen[r.type]||!!budgetState.detail;
+      var main='<tr class="bud-row" onclick="budgetOpenRow(\''+encodeURIComponent(r.type)+'\')" title="Show the events"><td><span class="bud-caret">'+(open?"▾":"▸")+'</span><i class="sw" style="background:'+typeColor(r.type)+'"></i>'+hEsc(r.type)+'</td>'+tds(budgetSplit(r.ev,d,cols))+'<td class="r num"><b>'+fWhole(r.cost)+'</b></td></tr>';
+      var lines=open?r.ev.map(function(e){var k=budgetColOf(e,d);return '<tr class="bud-ev" onclick="showDetail('+e.id+')"><td>'+hEsc(e.name)+'</td>'+cols.map(function(c){return '<td class="r num">'+(c.k===k?fWhole(budgetCost(e)):"")+'</td>';}).join("")+'<td class="r num">'+fWhole(budgetCost(e))+'</td></tr>';}).join(""):"";
+      return main+lines;}).join("");}).join("");
+  return '<div class="bud-wrap"><table class="bud-table bud-mon"><thead><tr><th>Budget / event type</th>'+cols.map(function(c){return '<th class="r">'+c.l+'</th>';}).join("")+'<th class="r">Total</th></tr></thead><tbody>'+body+'</tbody><tfoot><tr><td>Total</td>'+tds(tot)+'<td class="r num">'+fWhole(d.total.cost)+'</td></tr></tfoot></table></div>';
+}
 function renderBudget(){
   if(!budgetMap&&budgetMapState!=="loading")budgetLoadMap();
   var all=budgetTypes(),ys=budgetYears(),d=budgetData(),sel=d.sel,mxType=Math.max.apply(null,[1].concat.apply([1],d.groups.map(function(g){return g.rows.map(function(r){return r.cost;});})));
@@ -1925,9 +1946,9 @@ function renderBudget(){
       '<div class="bud-pick">'+pick+'</div>'+
       '<div class="bud-opts"><label>Year <select id="bud-year" onchange="budgetSetYear(this.value)"><option value="all"'+(d.y==="all"?" selected":"")+'>All years</option>'+ys.map(function(y){return '<option value="'+y+'"'+(y===d.y?" selected":"")+'>'+y+'</option>';}).join("")+'</select></label>'+
       '<label class="bud-check"><input type="checkbox" '+(d.done?"checked":"")+' onchange="budgetSet(\'done\',this.checked)"> Completed events only</label>'+
-      '<label class="bud-check"><input type="checkbox" '+(budgetState.detail?"checked":"")+' onchange="budgetSet(\'detail\',this.checked)"> Show each event</label></div></div>'+
+      '<label class="bud-check"><input type="checkbox" '+(budgetMonthsOn()?"checked":"")+' onchange="budgetSet(\'months\',this.checked)"> '+(d.y==="all"?"Years":"Months")+' as columns</label>'+'<label class="bud-check"><input type="checkbox" '+(budgetState.detail?"checked":"")+' onchange="budgetSet(\'detail\',this.checked)"> Show each event</label></div></div>'+
     '<div class="card"><div class="bud-head"><div class="bud-title">Actual cost — '+hEsc(budgetTitle(sel))+'</div><div class="card-s">'+hEsc(budgetSub(d))+'</div></div>'+
-      (sel.length?'<div class="bud-wrap"><table class="bud-table"><thead><tr><th>Budget / event type</th><th class="r">Events</th><th class="r">Actual cost</th><th class="r">Avg. per event</th><th>Share of cost</th></tr></thead><tbody>'+body+'</tbody>'+
+      (sel.length&&budgetMonthsOn()?budgetMonthTable(d)+'<p class="card-s" style="margin-top:10px">Actual cost by '+(d.y==="all"?"year":"month of the event date")+', rounded to whole dollars. Click a type to see its events.</p>':sel.length?'<div class="bud-wrap"><table class="bud-table"><thead><tr><th>Budget / event type</th><th class="r">Events</th><th class="r">Actual cost</th><th class="r">Avg. per event</th><th>Share of cost</th></tr></thead><tbody>'+body+'</tbody>'+
       '<tfoot><tr><td>Total</td><td class="r num">'+d.total.n+'</td><td class="r num">'+fMoney(d.total.cost)+'</td><td class="r num">'+(d.total.n?fMoney(d.total.avg):"—")+'</td><td></td></tr></tfoot></table></div>'+
       '<p class="card-s" style="margin-top:10px">Actual cost = each event\'s purchases minus credits, as entered on its Purchases tab. Click a type to see its events.</p>'
       :'<p class="card-s">Pick at least one budget or event type above.</p>')+'</div>'+(unassigned?'':mapEd);
@@ -1940,12 +1961,23 @@ function budgetSetYear(v){budgetState.year=v;budgetSave();renderBudget();}
 function budgetSet(k,v){budgetState[k]=v;budgetSave();renderBudget();}
 function budgetOpenRow(t){t=decodeURIComponent(t);budgetOpen[t]=!budgetOpen[t];renderBudget();}
 function budgetCsv(){
+  if(budgetMonthsOn())return budgetCsvMonths();
   var d=budgetData(),q=function(v){v=String(v==null?"":v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;},L=[["Budget report — "+budgetTitle(d.sel)],[budgetSub(d)],[],["Budget","Event type","Events","Actual cost","Avg per event"]];
   d.groups.forEach(function(g){g.rows.forEach(function(r){L.push([g.budget,r.type,r.n,r.cost.toFixed(2),r.n?r.avg.toFixed(2):""]);if(budgetState.detail)r.ev.forEach(function(e){L.push([g.budget,"   "+e.name+" ("+(e.date||"")+")","",budgetCost(e).toFixed(2),""]);});});
     L.push([g.budget+" budget total","",g.n,g.cost.toFixed(2),g.n?g.avg.toFixed(2):""]);});
   L.push(["Total","",d.total.n,d.total.cost.toFixed(2),d.total.n?d.total.avg.toFixed(2):""]);
   var blob=new Blob([L.map(function(r){return r.map(q).join(",");}).join("\r\n")],{type:"text/csv"}),a=document.createElement("a");
   a.href=URL.createObjectURL(blob);a.download="DELC budget report "+(d.y==="all"?"all years":d.y)+".csv";document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);
+}
+function budgetCsvMonths(){
+  var d=budgetData(),cols=budgetCols(d),q=function(v){v=String(v==null?"":v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  var sp=function(evs){var o=budgetSplit(evs,d,cols);return cols.map(function(c){return o[c.k].toFixed(2);});};
+  var L=[["Budget report — "+budgetTitle(d.sel)],[budgetSub(d)],[],["Budget","Event type"].concat(cols.map(function(c){return c.l;})).concat(["Total"])],allEv=[];
+  d.groups.forEach(function(g){var gev=[];g.rows.forEach(function(r){gev=gev.concat(r.ev);allEv=allEv.concat(r.ev);L.push([g.budget,r.type].concat(sp(r.ev)).concat([r.cost.toFixed(2)]));if(budgetState.detail)r.ev.forEach(function(e){L.push([g.budget,"   "+e.name+" ("+(e.date||"")+")"].concat(sp([e])).concat([budgetCost(e).toFixed(2)]));});});
+    L.push([g.budget+" budget total",""].concat(sp(gev)).concat([g.cost.toFixed(2)]));});
+  L.push(["Total",""].concat(sp(allEv)).concat([d.total.cost.toFixed(2)]));
+  var blob=new Blob([L.map(function(r){return r.map(q).join(",");}).join("\r\n")],{type:"text/csv"}),a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);a.download="DELC budget report by "+(d.y==="all"?"year":"month "+d.y)+".csv";document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);
 }
 function budgetPrint(){
   var d=budgetData(),title=budgetTitle(d.sel),ov=document.getElementById("print-overlay");
@@ -1956,7 +1988,7 @@ function budgetPrint(){
     '<div style="border-bottom:3px solid #1B3254;padding-bottom:10px;margin-bottom:16px"><div style="font-size:10pt;color:#5d6a82;font-weight:700">Duncansville Evangelical Lutheran Church — Service &amp; Hospitality</div><div style="font-size:20pt;font-weight:900;color:#1B3254">Budget report — '+hEsc(title)+'</div><div style="font-size:9pt;color:#5d6a82">'+hEsc(budgetSub(d))+'</div></div>';
   ov.innerHTML='<style>#print-overlay{font-family:"Helvetica Neue",Arial,sans-serif;color:#1a1a1a;font-size:11pt}#print-overlay table{width:100%;border-collapse:collapse;margin-top:6px}#print-overlay th{text-align:left;font-size:9pt;color:#5d6a82;text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid #1B3254;padding:6px 8px}#print-overlay td{padding:6px 8px;border-bottom:1px solid #e3e8f0}#print-overlay .r{text-align:right}#print-overlay tr.g td{font-weight:800;background:#eef1f6;color:#1B3254}#print-overlay tr.t td:first-child{padding-left:20px}#print-overlay tr.e td{font-size:9.5pt;color:#4a566d}#print-overlay tr.e td:first-child{padding-left:36px}#print-overlay tfoot td{font-weight:800;border-top:2px solid #1B3254;border-bottom:none}#print-overlay .note{font-size:8.5pt;color:#5d6a82;margin-top:14px}#print-overlay .close-btn{position:fixed;top:20px;right:20px;background:#1B3254;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer;z-index:10000}#print-overlay .print-btn{position:fixed;top:20px;right:120px;background:#fff;color:#1B3254;border:1px solid #1B3254;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer;z-index:10000}@media print{#print-overlay .close-btn,#print-overlay .print-btn{display:none}#print-overlay tr.g td{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style>'+
     '<button class="print-btn" onclick="window.print()">🖨 Print</button><button class="close-btn" onclick="closePrintOverlay()">✕ Close</button>'+head+
-    (d.sel.length?'<table><thead><tr><th>Budget / event type</th><th class="r">Events</th><th class="r">Actual cost</th><th class="r">Avg. per event</th><th class="r">Share</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><td>Total</td><td class="r">'+d.total.n+'</td><td class="r">'+fMoney(d.total.cost)+'</td><td class="r">'+(d.total.n?fMoney(d.total.avg):"—")+'</td><td class="r">100%</td></tr></tfoot></table>':'<p>Nothing picked.</p>')+
+    (d.sel.length&&budgetMonthsOn()?budgetMonthTable(d).replace(/ onclick="[^"]*"/g,"").replace(/<span class="bud-caret">[^<]*<\/span>/g,"").replace(/<i class="sw"[^>]*><\/i>/g,"")+'<style>@page{size:landscape;margin:.4in}#print-overlay .bud-mon{font-size:8.5pt}#print-overlay .bud-mon td,#print-overlay .bud-mon th{padding:4px 5px;white-space:nowrap}#print-overlay .bud-grow td{font-weight:800;background:#eef1f6;color:#1B3254;-webkit-print-color-adjust:exact;print-color-adjust:exact}#print-overlay .bud-row td:first-child{padding-left:14px}#print-overlay .bud-ev td{color:#4a566d;font-size:8pt}#print-overlay .bud-ev td:first-child{padding-left:26px}#print-overlay .bud-z{color:#b4bccb}</style>':d.sel.length?'<table><thead><tr><th>Budget / event type</th><th class="r">Events</th><th class="r">Actual cost</th><th class="r">Avg. per event</th><th class="r">Share</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><td>Total</td><td class="r">'+d.total.n+'</td><td class="r">'+fMoney(d.total.cost)+'</td><td class="r">'+(d.total.n?fMoney(d.total.avg):"—")+'</td><td class="r">100%</td></tr></tfoot></table>':'<p>Nothing picked.</p>')+
     '<div class="note">Actual cost = each event\'s purchases minus credits. Printed '+new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})+' from delcEVENTS.</div>';
   ov.style.display="block";document.body.style.overflow="hidden";setTimeout(function(){window.print();},250);
 }
@@ -1985,6 +2017,7 @@ function budgetPrint(){
   ".bud-table tfoot td{font-weight:800;border-top:2px solid var(--navy,#1B3254);border-bottom:none;font-size:14.5px}"+
   ".bud-maph{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;background:none;border:none;font:inherit;font-weight:800;font-size:15px;color:var(--navy,#1B3254);cursor:pointer;padding:0;text-align:left;flex-wrap:wrap}"+
   ".bud-map{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px 18px;margin-top:12px}"+
+  ".bud-mon{min-width:980px}.bud-mon td,.bud-mon th{padding:8px 7px;white-space:nowrap}.bud-mon td:first-child,.bud-mon th:first-child{position:sticky;left:0;background:#fff;z-index:1;min-width:170px}.bud-mon .bud-grow td:first-child{background:#eef1f6}.bud-mon .bud-ev td:first-child{background:#fafbfd;padding-left:40px;white-space:normal}.bud-mon tfoot td:first-child{background:#fff}.bud-mon .bud-row:hover td:first-child{background:#f5f7fb}.bud-z{color:#b4bccb}"+
   ".bud-mrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border,#eef1f6);font-size:14px;font-weight:600}";
   document.head.appendChild(st);})();
 
