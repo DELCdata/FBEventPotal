@@ -7,6 +7,36 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script id="delc-guard">/* DELC input guard (2026-11-27) — same block in every delcAPP.
+ 1) Windows: a click on a window's dark background only counts when the press started there too. Dragging to highlight
+    words in a box and letting go outside the window no longer closes it.
+ 2) Date & time boxes: browsers report a change as soon as one part (like the hour) is typed, and apps that redraw on a
+    change threw the cursor out before the minutes. Typed changes now wait until you leave the box or press Enter.
+    Picking from the calendar pop-up is not held. */
+(function(){
+  var down=null;
+  window.addEventListener('mousedown',function(e){down=e.target;},true);
+  window.addEventListener('click',function(e){
+    var s=down,t=e.target;down=null;
+    if(!s||s===t||!t||!t.contains||!t.contains(s))return;
+    var inBox=s.closest&&s.closest('input,textarea,select,[contenteditable]');
+    var sel='';try{sel=String(window.getSelection()||'');}catch(x){}
+    if(inBox||sel){e.stopImmediatePropagation();e.preventDefault();}
+  },true);
+  if(window.DELC_NO_DATE_HOLD)return;
+  function dt(t){return !!(t&&t.tagName==='INPUT'&&/^(date|time|datetime-local|month|week)$/.test(t.type));}
+  function flush(t){t.__dh=0;if(!t.__dp)return;t.__dp=0;
+    ['input','change'].forEach(function(n){var ev=new Event(n,{bubbles:true});ev.__delcReplay=1;t.dispatchEvent(ev);});}
+  window.addEventListener('keydown',function(e){var t=e.target;if(!dt(t))return;
+    if(e.key==='Enter'){flush(t);return;}
+    if(e.key&&(e.key.length===1||/^(Backspace|Delete|ArrowUp|ArrowDown)$/.test(e.key)))t.__dh=1;},true);
+  function hold(e){var t=e.target;if(dt(t)&&t.__dh&&!e.__delcReplay){e.stopImmediatePropagation();t.__dp=1;}}
+  window.addEventListener('input',hold,true);
+  window.addEventListener('change',hold,true);
+  window.addEventListener('focusout',function(e){if(dt(e.target))flush(e.target);},true);
+})();
+</script>
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>delcEVENTS</title>
 <script src="https://delcdata.github.io/DELCAppsHub/delc-kit.js?v=4"></script>
@@ -577,7 +607,7 @@ const gMs=e=>{try{return new Date(e.date+"T12:00:00").getTime();}catch{return 0;
 const calcCost=ev=>(ev.purchases||[]).reduce((s,p)=>s+(+p.debit||0)-(+p.credit||0),0);
 const offerTotal=o=>{if(!o)return 0;return(o.hundreds||0)*100+(o.fifties||0)*50+(o.twenties||0)*20+(o.tens||0)*10+(o.fives||0)*5+(o.ones||0)*1+(+o.coin||0)+(+o.checks||0)+(+o.online||0)+(+o.square||0);};
 const emptyOffer=()=>({hundreds:0,fifties:0,twenties:0,tens:0,fives:0,ones:0,coin:0,checks:0,online:0,square:0});
-const emptyEvent=()=>({id:Date.now(),name:"",date:new Date().toISOString().split("T")[0],type:"Mug",status:"Scheduled",menu:"",attendance:{adults:0,children:0,kidsMeals:0},financials:{totalCost:0,totalOffering:0,totalIncome:0},purchases:[],offering:emptyOffer(),volunteers:[],startTime:"",endTime:"",jobs:[]});
+const emptyEvent=()=>({id:Date.now(),name:"",date:(function(d){return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);})(new Date()),type:"Mug",status:"Scheduled",menu:"",attendance:{adults:0,children:0,kidsMeals:0},financials:{totalCost:0,totalOffering:0,totalIncome:0},purchases:[],offering:emptyOffer(),volunteers:[],startTime:"",endTime:"",jobs:[]});
 const fmtSz=s=>{const b=new Blob([s]).size;return b<1024?b+"B":b<1048576?(b/1024).toFixed(1)+"KB":(b/1048576).toFixed(1)+"MB";};
 
 const SEED=[
@@ -1075,9 +1105,9 @@ async function seatForEvent(id){
 function seatHtml(e,rows){
   const esc=v=>String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
   if(rows.length) return `<div class="card" style="margin-bottom:12px"><div class="card-h" style="margin-bottom:6px"><div class="detail-block-label" style="margin:0">Seating &amp; room layout</div></div>`+
-    rows.map(r=>`<div class="detail-row"><span>${esc(r.name)} <span style="color:var(--muted)">· ${(r.settings&&r.settings.kind)==="vendor"?"vendor layout":"dinner seating"}</span></span><a class="btn btn-sm" href="${SEAT_URL}?event=${encodeURIComponent(r.id)}" target="_blank" rel="noopener">Open in delcDINING.EVENT ↗</a></div>`).join("")+`</div>`;
+    rows.map(r=>`<div class="detail-row"><span>${esc(r.name)} <span style="color:var(--muted)">· ${(r.settings&&r.settings.kind)==="vendor"?"vendor layout":"dinner seating"}</span></span><a class="btn btn-sm" href="${SEAT_URL}?event=${encodeURIComponent(r.id)}">Open in delcDINING.EVENT</a></div>`).join("")+`</div>`;
   if(/^mug$/i.test(e.type||"")) return "";
-  return `<div class="card" style="margin-bottom:12px"><div class="detail-row" style="border:0"><span><span class="detail-block-label" style="margin:0 8px 0 0">Seating &amp; room layout</span><span style="color:var(--muted);font-size:12px">None yet</span></span><a class="btn btn-sm" href="${SEAT_URL}?from=${encodeURIComponent(e.id)}" target="_blank" rel="noopener">Start one in delcDINING.EVENT ↗</a></div></div>`;
+  return `<div class="card" style="margin-bottom:12px"><div class="detail-row" style="border:0"><span><span class="detail-block-label" style="margin:0 8px 0 0">Seating &amp; room layout</span><span style="color:var(--muted);font-size:12px">None yet</span></span><a class="btn btn-sm" href="${SEAT_URL}?from=${encodeURIComponent(e.id)}">Start one in delcDINING.EVENT</a></div></div>`;
 }
 
 // ── Pantry supplies dispensed to this event (HS Pantry app + Mug close-outs) ──
@@ -1098,7 +1128,7 @@ function pantryHtml(ds,tot){
   const esc=v=>String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;");
   if(!ds.length) return `<p style="color:var(--muted);font-size:13px">No pantry supplies have been dispensed to this event yet.</p>
     <p class="pn-note">Supplies show up here when someone picks this event on the HS Pantry <em>Dispense</em> screen, or posts a Motivational Mug close-out to it.</p>
-    <a class="btn" style="margin-top:12px" href="https://delcdata.github.io/HSPMugPantry/" target="_blank" rel="noopener">Open HS Pantry ↗</a>`;
+    <a class="btn" style="margin-top:12px" href="https://delcdata.github.io/HSPMugPantry/">Open HS Pantry</a>`;
   return ds.map(d=>`<div class="pn-group">
       <div class="pn-head"><span><strong>${new Date(d.date).toLocaleDateString()}</strong> · ${esc(d.operator||"")}${d.notes?" · "+esc(d.notes):""}</span><span>${fC(pnCost(d))}</span></div>
       <div style="overflow-x:auto"><table style="min-width:420px"><thead><tr><th>Item</th><th>Pantry</th><th class="r">Qty</th><th class="r">Unit cost</th><th class="r">Cost</th></tr></thead><tbody>
@@ -1479,7 +1509,7 @@ async function restoreBackup(i){
 function exportJSON(){
   const p=JSON.stringify({events,exportedAt:new Date().toISOString(),version:"1.0"},null,2);
   const blob=new Blob([p],{type:"application/json"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="delc_fb_"+new Date().toISOString().split("T")[0]+".json";a.click();
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="delc_fb_"+(function(d){return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);})(new Date())+".json";a.click();
   showToast("Exported all data");
 }
 
