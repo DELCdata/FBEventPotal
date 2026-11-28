@@ -394,7 +394,7 @@ tbody tr:last-child td{border-bottom:none}
 .sd-pick{width:auto!important;min-width:140px;max-width:min(240px,100%);text-overflow:ellipsis;padding:6px 10px!important;font-size:13px!important;border-radius:980px!important;background:var(--fill)!important}
 .sd-add{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:4px 0 6px}
 .sd-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:14px;border-top:.5px solid var(--sep)}
-.tp-row{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;padding:10px 0;border-top:.5px solid var(--sep)}
+.tp-row{display:grid;grid-template-columns:1fr auto auto auto auto;gap:10px;align-items:center;padding:10px 0;border-top:.5px solid var(--sep)}
 .tp-row:first-of-type{border-top:none}
 .sum-sched{cursor:pointer}
 @media(max-width:700px){
@@ -403,7 +403,7 @@ tbody tr:last-child td{border-bottom:none}
   .ov-row{grid-template-columns:8px 1fr;}.ov-need,.ov-sel{grid-column:2}
   .sd-top{grid-template-columns:1fr 1fr}
   .sd-th{display:none}.sd-task{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 54px 30px}#sched-modal .modal{padding:20px 14px}.sd-job{padding:12px}.sd-tn{grid-column:1/-1}
-  .tp-row{grid-template-columns:1fr auto auto}.tp-row>.card-s{display:none}
+  .tp-row{grid-template-columns:1fr auto auto auto}.tp-row>.card-s{display:none}
 }
 #panel-volunteers td a{color:var(--navy);text-decoration:none;font-weight:500}#panel-volunteers td a:hover{text-decoration:underline}
 
@@ -1698,6 +1698,7 @@ async function sdAddPerson(j,t,val){
 function sdRmPerson(j,t,p){sdTask(j,t).people.splice(p,1);renderSchedEditor();}
 function sdMoveJob(j,d){var k=j+d;if(k<0||k>=SD.jobs.length)return;var x=SD.jobs.splice(j,1)[0];SD.jobs.splice(k,0,x);renderSchedEditor();}
 function renderSchedEditor(){
+  if(SD&&SD.tpl){renderTplEditor();return;}
   var e=events.find(function(x){return x.id===SD_EVENT;});if(!e||!SD)return;
   var tOpts='<option value="">Start from a template…</option>'+TEMPLATES.map(function(t){var n=(t.jobs&&t.jobs.jobs||[]).reduce(function(s,j){return s+j.tasks.length;},0);return '<option value="'+hEsc(t.id)+'">'+hEsc(t.name)+' ('+n+' task'+(n===1?'':'s')+')</option>';}).join("");
   var jobsHtml=SD.jobs.map(function(j,ji){
@@ -1762,6 +1763,67 @@ function applyTemplate(id){
   renderSchedEditor();showToast("Added “"+tpl.name+"” — now pick people");
 }
 
+/* ── Template editor (2026-11-27): make or edit a job template from the Volunteers tab, no event needed.
+   Reuses the schedule editor's jobs/tasks (sdAddJob, sdAddTask…); no people. Times are typed as clock times
+   for a sample event start and saved as minutes from that start, same as “Save as template”. ── */
+function openTplEditor(id){
+  var t=id?TEMPLATES.find(function(x){return x.id===id;}):null;if(id&&!t)return;
+  var b=(t&&t.jobs)||{},base=tMin(b.baseStart);
+  var at=function(o){return o==null||base==null?"":mT(base+o);};
+  SD_EVENT=null;
+  SD={tpl:true,tplId:t?t.id:null,name:t?t.name:"",startTime:b.baseStart||"",endTime:b.endOff!=null&&base!=null?mT(base+b.endOff):(b.baseEnd||""),
+    jobs:(b.jobs||[]).map(function(j,i){return {id:"j"+sUid(),name:j.name||"",color:j.color||JOB_COLORS[i%JOB_COLORS.length],
+      tasks:(j.tasks||[]).map(function(k){return {id:"t"+sUid(),name:k.name||"",start:at(k.startOff),end:at(k.endOff),needed:k.needed||0,people:[],notes:k.notes||""};})};})};
+  document.getElementById("sched-modal").style.display="flex";renderTplEditor();
+  if(!t)setTimeout(function(){var el=document.getElementById("tpl-name");if(el)el.focus();},30);
+}
+function renderTplEditor(){
+  var jobsHtml=SD.jobs.map(function(j,ji){
+    var col=jobColor(j,ji);
+    var tasks=j.tasks.map(function(t,ti){
+      return '<div class="sd-task">'+
+        '<input class="inp sd-tn" id="sd-tn-'+ji+'-'+ti+'" value="'+hEsc(t.name)+'" placeholder="Task (e.g. Prep casserole)" onchange="sdSet('+ji+','+ti+',\'name\',this.value)">'+
+        '<input class="inp sd-tt" type="time" value="'+hEsc(t.start)+'" onchange="sdSet('+ji+','+ti+',\'start\',this.value,1)" aria-label="Start">'+
+        '<input class="inp sd-tt" type="time" value="'+hEsc(t.end)+'" onchange="sdSet('+ji+','+ti+',\'end\',this.value,1)" aria-label="End">'+
+        '<label class="sd-need">Need<input class="inp" type="number" min="0" value="'+(+t.needed||0)+'" onchange="sdSet('+ji+','+ti+',\'needed\',parseInt(this.value)||0,1)"></label>'+
+        '<button class="sd-x" onclick="sdDelTask('+ji+','+ti+')" aria-label="Remove task">×</button>'+
+      '</div>';}).join("");
+    return '<div class="sd-job" style="--c:'+col+'"><div class="sd-jh"><i></i><input class="inp sd-jn" value="'+hEsc(j.name)+'" placeholder="Job name (e.g. Kitchen)" onchange="sdSet('+ji+',null,\'name\',this.value)">'+
+      '<button class="sd-x" title="Move up" onclick="sdMoveJob('+ji+',-1)">↑</button><button class="sd-x" title="Move down" onclick="sdMoveJob('+ji+',1)">↓</button><button class="sd-x" onclick="sdDelJob('+ji+')" title="Remove job">×</button></div>'+
+      '<div class="sd-th"><span>Task</span><span>Start</span><span>End</span><span>Need</span><span></span></div>'+
+      (tasks||'<div class="card-s" style="padding:6px 2px">No tasks yet.</div>')+
+      '<button class="btn btn-sm" style="margin-top:8px" onclick="sdAddTask('+ji+')">+ Task</button></div>';
+  }).join("");
+  document.getElementById("sched-inner").innerHTML=
+    '<div class="modal-header"><div><div class="modal-eyebrow">Job template</div><h2 class="modal-title">'+(SD.tplId?'Edit template':'New template')+'</h2></div><button class="xbtn" onclick="closeSchedEditor()" aria-label="Close">✕</button></div>'+
+    '<div class="sd-top"><div style="grid-column:1/-1"><label class="lbl" for="tpl-name">Template name</label><input class="inp" id="tpl-name" value="'+hEsc(SD.name)+'" placeholder="e.g. Dinner schedule" oninput="SD.name=this.value;var x=document.getElementById(\'tpl-err\');if(x)x.style.display=\'none\'"></div>'+
+      '<div><label class="lbl">Event starts</label><input class="inp" type="time" value="'+hEsc(SD.startTime)+'" onchange="SD.startTime=this.value;renderTplEditor()"></div>'+
+      '<div><label class="lbl">Event ends</label><input class="inp" type="time" value="'+hEsc(SD.endTime)+'" onchange="SD.endTime=this.value;renderTplEditor()"></div></div>'+
+    '<div class="sd-hint">Set the event’s usual start time, then give each task its times. When you use this template on an event, every task moves with that event’s start (a task 1 hour before here stays 1 hour before). People are picked on each event.</div>'+
+    jobsHtml+
+    '<div class="sd-add"><span class="card-s">Add a job:</span>'+JOB_PRESETS.map(function(p){return '<button class="btn btn-sm" onclick="sdAddJob(\''+p+'\')">'+p+'</button>';}).join("")+'<button class="btn btn-sm" onclick="sdAddJob(\'\')">+ Other</button></div>'+
+    '<div id="tpl-err" style="display:none;color:#b91c1c;font-size:13px;margin-top:10px"></div>'+
+    '<div class="sd-foot"><button class="btn" onclick="closeSchedEditor()">Cancel</button><button class="btn btn-primary" onclick="saveTplEditor()">&#10003; Save template</button></div>';
+}
+async function saveTplEditor(){
+  var err=function(m){var el=document.getElementById("tpl-err");el.textContent=m;el.style.display="block";};
+  var name=(SD.name||"").trim();if(!name){err("Please give the template a name.");var n=document.getElementById("tpl-name");if(n)n.focus();return;}
+  if(!SD.jobs.length){err("Add at least one job.");return;}
+  var ex=TEMPLATES.find(function(t){return t.name.toLowerCase()===name.toLowerCase()&&t.id!==SD.tplId;});
+  if(ex){err("There’s already a template called “"+ex.name+"”. Pick another name.");return;}
+  SD.jobs.forEach(function(j,ji){if(!j.name.trim())j.name="Job "+(ji+1);j.tasks=j.tasks.filter(function(t){return t.name.trim()||t.start;});j.tasks.forEach(function(t,ti){if(!t.name.trim())t.name="Task "+(ti+1);});});
+  var base=tMin(SD.startTime);
+  if(base==null){var all=[];SD.jobs.forEach(function(j){j.tasks.forEach(function(t){if(tMin(t.start)!=null)all.push(tMin(t.start));});});base=all.length?Math.min.apply(null,all):null;}
+  var off=function(t){var m=tMin(t);return m==null||base==null?null:m-base;};
+  var body={baseStart:base==null?null:mT(base),baseEnd:SD.endTime||null,endOff:off(SD.endTime),
+    jobs:SD.jobs.map(function(j){return {name:j.name,color:j.color,tasks:j.tasks.map(function(t){return {name:t.name,startOff:off(t.start),endOff:off(t.end),needed:+t.needed||0,notes:t.notes||""};})};})};
+  var tpl={id:SD.tplId||("tpl"+sUid()),name:name,jobs:body};
+  if(!(await saveTemplate(tpl)))return;
+  var cur=TEMPLATES.find(function(t){return t.id===tpl.id;});if(cur)Object.assign(cur,tpl);else TEMPLATES.push(tpl);
+  TEMPLATES.sort(function(a,b){return a.name.localeCompare(b.name);});
+  closeSchedEditor();renderVolunteers();showToast("Template “"+name+"” saved");
+}
+
 /* ═════ Printable schedule ═════ */
 function schedPrintCss(){return '<style>#print-overlay *{box-sizing:border-box}#print-overlay{font-family:"Helvetica Neue",Arial,sans-serif;color:#1a1a1a;font-size:10.5pt;background:#fff}'+
   '#print-overlay .sp-h{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #1B3254;padding-bottom:10px;margin-bottom:14px}'+
@@ -1807,10 +1869,10 @@ function renderVolunteers(){
   var rows=list.map(function(v){var up=upcomingFor(v.id),nx=up[0];
     return '<tr'+(v.active===false?' style="opacity:.5"':'')+'><td><div style="display:flex;align-items:center;gap:10px"><span class="pv-av sm">'+hEsc(initials(v.name))+'</span><b>'+hEsc(v.name)+'</b></div></td><td>'+hEsc(v.phone||"")+'</td><td>'+hEsc(v.email||"")+'</td><td class="num">'+up.length+'</td><td>'+(nx?'<a href="#" onclick="showDetail('+nx.e.id+');activeDetailTab=\'schedule\';renderDetail(events.find(function(x){return x.id==='+nx.e.id+'}));return false">'+hEsc(fD(nx.e.date).replace(/, \d{4}$/,""))+' · '+hEsc(nx.t.name)+'</a>':'<span style="color:var(--label-3)">—</span>')+'</td><td style="text-align:right"><button class="btn btn-sm" onclick="editVol(\''+v.id+'\')">Edit</button></td></tr>';}).join("");
   var tpls=TEMPLATES.map(function(t){var b=t.jobs||{},js=b.jobs||[],n=js.reduce(function(s,j){return s+j.tasks.length;},0);
-    return '<div class="tp-row"><div style="min-width:0"><b>'+hEsc(t.name)+'</b><div class="card-s">'+js.map(function(j){return hEsc(j.name)+" ("+j.tasks.length+")";}).join(" · ")+(b.baseStart?' · starts '+hEsc(fT(b.baseStart)):'')+'</div></div><span class="card-s">'+n+' task'+(n===1?'':'s')+'</span><button class="btn btn-sm" onclick="renameTemplate(\''+t.id+'\')">Rename</button><button class="btn btn-sm btn-danger" onclick="deleteTemplate(\''+t.id+'\')">Delete</button></div>';}).join("");
+    return '<div class="tp-row"><div style="min-width:0"><b>'+hEsc(t.name)+'</b><div class="card-s">'+js.map(function(j){return hEsc(j.name)+" ("+j.tasks.length+")";}).join(" · ")+(b.baseStart?' · starts '+hEsc(fT(b.baseStart)):'')+'</div></div><span class="card-s">'+n+' task'+(n===1?'':'s')+'</span><button class="btn btn-sm" onclick="openTplEditor(\''+t.id+'\')">Edit</button><button class="btn btn-sm" onclick="renameTemplate(\''+t.id+'\')">Rename</button><button class="btn btn-sm btn-danger" onclick="deleteTemplate(\''+t.id+'\')">Delete</button></div>';}).join("");
   el.innerHTML='<div class="ph"><div><div class="eyebrow">Roster &amp; job templates</div><div class="pt">Volunteers</div></div><div class="fr"><input class="inp" style="width:220px" placeholder="Search" value="'+hEsc(volSearch)+'" oninput="volSearch=this.value;renderVolunteers();var i=document.querySelector(\'#panel-volunteers .ph input\');i.focus();i.setSelectionRange(i.value.length,i.value.length)"><button class="btn btn-gold" onclick="editVol(null)">+ Add volunteer</button></div></div>'+
     '<div class="card" style="margin-bottom:16px"><div class="card-h"><div class="card-t">Roster</div><div class="card-s">'+VOLS.filter(function(v){return v.active!==false;}).length+' active</div></div><div style="overflow-x:auto"><table style="width:100%;min-width:620px"><thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Upcoming</th><th>Next shift</th><th></th></tr></thead><tbody>'+(rows||'<tr><td colspan="6" class="card-s">No volunteers match.</td></tr>')+'</tbody></table></div></div>'+
-    '<div class="card"><div class="card-h"><div class="card-t">Job templates</div><div class="card-s">Build a schedule on an event, then “Save as template” to reuse it</div></div>'+(tpls||'<div class="card-s">No templates yet.</div>')+'</div>';
+    '<div class="card"><div class="card-h"><div class="card-t">Job templates</div><div class="card-s">Make one here, or build a schedule on an event and “Save as template”</div></div>'+(tpls||'<div class="card-s">No templates yet.</div>')+'<div style="margin-top:12px;padding-top:12px;border-top:.5px solid var(--sep)"><button class="btn btn-gold" onclick="openTplEditor(null)">+ New template</button></div></div>';
 }
 function editVol(id){
   var v=id?Object.assign({},volById(id)):{id:"v"+sUid(),name:"",phone:"",email:"",teams:"",notes:"",active:true};
