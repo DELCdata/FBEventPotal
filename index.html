@@ -394,7 +394,7 @@ tbody tr:last-child td{border-bottom:none}
 .sd-pick{width:auto!important;min-width:140px;max-width:min(240px,100%);text-overflow:ellipsis;padding:6px 10px!important;font-size:13px!important;border-radius:980px!important;background:var(--fill)!important}
 .sd-add{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:4px 0 6px}
 .sd-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:14px;border-top:.5px solid var(--sep)}
-.tp-row{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;padding:10px 0;border-top:.5px solid var(--sep)}
+.tp-row{display:grid;grid-template-columns:1fr auto auto auto auto;gap:10px;align-items:center;padding:10px 0;border-top:.5px solid var(--sep)}
 .tp-row:first-of-type{border-top:none}
 .sum-sched{cursor:pointer}
 @media(max-width:700px){
@@ -403,7 +403,7 @@ tbody tr:last-child td{border-bottom:none}
   .ov-row{grid-template-columns:8px 1fr;}.ov-need,.ov-sel{grid-column:2}
   .sd-top{grid-template-columns:1fr 1fr}
   .sd-th{display:none}.sd-task{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 54px 30px}#sched-modal .modal{padding:20px 14px}.sd-job{padding:12px}.sd-tn{grid-column:1/-1}
-  .tp-row{grid-template-columns:1fr auto auto}.tp-row>.card-s{display:none}
+  .tp-row{grid-template-columns:1fr auto auto auto}.tp-row>.card-s{display:none}
 }
 #panel-volunteers td a{color:var(--navy);text-decoration:none;font-weight:500}#panel-volunteers td a:hover{text-decoration:underline}
 
@@ -499,6 +499,7 @@ html body :is(.ec-stat-label,.type-pill,.ec-stat-val,.pv-av,.save-chip,.tl-open,
     <div id="panel-events" class="panel" style="display:none"></div>
     <div id="panel-charts" class="panel" style="display:none"></div>
     <div id="panel-volunteers" class="panel" style="display:none"></div>
+    <div id="panel-budget" class="panel" style="display:none"></div>
   </div></div>
 </div>
 
@@ -832,14 +833,15 @@ var FB_TABS=[
   ["calendar","Calendar",'<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>'],
   ["events","Events",'<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>'],
   ["charts","Charts",'<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>'],
-  ["volunteers","Volunteers",'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0113 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2A5 5 0 0121.5 20"/>']
+  ["budget","Yearly overview",'<path d="M4 6h16v12H4z"/><path d="M4 10h16"/><path d="M8 14h3"/>'],
+  ["volunteers","Scheduling",'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0113 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2A5 5 0 0121.5 20"/>']
 ];
 var calMonth=null;
 function setTab(t){
   activeTab=t;
   document.getElementById("tabs").innerHTML=FB_TABS.map(function(x){return '<button class="'+(x[0]===t?"on":"")+'" onclick="setTab(\''+x[0]+'\')"><svg viewBox="0 0 24 24">'+x[2]+'</svg><span>'+x[1]+(x[0]==="events"?" ("+events.length+")":"")+'</span></button>';}).join("");
-  ["overview","calendar","events","charts","volunteers"].forEach(function(x){document.getElementById("panel-"+x).style.display=x===t?"block":"none";});
-  if(t==="overview")renderOverview();else if(t==="calendar")renderCalendar();else if(t==="events")renderEvents();else if(t==="volunteers")renderVolunteers();else renderCharts();
+  ["overview","calendar","events","charts","volunteers","budget"].forEach(function(x){document.getElementById("panel-"+x).style.display=x===t?"block":"none";});
+  if(t==="overview")renderOverview();else if(t==="calendar")renderCalendar();else if(t==="events")renderEvents();else if(t==="volunteers")renderVolunteers();else if(t==="budget")renderBudget();else renderCharts();
 }
 function showDash(){
   currentEventId=null;
@@ -1696,6 +1698,7 @@ async function sdAddPerson(j,t,val){
 function sdRmPerson(j,t,p){sdTask(j,t).people.splice(p,1);renderSchedEditor();}
 function sdMoveJob(j,d){var k=j+d;if(k<0||k>=SD.jobs.length)return;var x=SD.jobs.splice(j,1)[0];SD.jobs.splice(k,0,x);renderSchedEditor();}
 function renderSchedEditor(){
+  if(SD&&SD.tpl){renderTplEditor();return;}
   var e=events.find(function(x){return x.id===SD_EVENT;});if(!e||!SD)return;
   var tOpts='<option value="">Start from a template…</option>'+TEMPLATES.map(function(t){var n=(t.jobs&&t.jobs.jobs||[]).reduce(function(s,j){return s+j.tasks.length;},0);return '<option value="'+hEsc(t.id)+'">'+hEsc(t.name)+' ('+n+' task'+(n===1?'':'s')+')</option>';}).join("");
   var jobsHtml=SD.jobs.map(function(j,ji){
@@ -1760,6 +1763,67 @@ function applyTemplate(id){
   renderSchedEditor();showToast("Added “"+tpl.name+"” — now pick people");
 }
 
+/* ── Template editor (2026-11-27): make or edit a job template from the Volunteers tab, no event needed.
+   Reuses the schedule editor's jobs/tasks (sdAddJob, sdAddTask…); no people. Times are typed as clock times
+   for a sample event start and saved as minutes from that start, same as “Save as template”. ── */
+function openTplEditor(id){
+  var t=id?TEMPLATES.find(function(x){return x.id===id;}):null;if(id&&!t)return;
+  var b=(t&&t.jobs)||{},base=tMin(b.baseStart);
+  var at=function(o){return o==null||base==null?"":mT(base+o);};
+  SD_EVENT=null;
+  SD={tpl:true,tplId:t?t.id:null,name:t?t.name:"",startTime:b.baseStart||"",endTime:b.endOff!=null&&base!=null?mT(base+b.endOff):(b.baseEnd||""),
+    jobs:(b.jobs||[]).map(function(j,i){return {id:"j"+sUid(),name:j.name||"",color:j.color||JOB_COLORS[i%JOB_COLORS.length],
+      tasks:(j.tasks||[]).map(function(k){return {id:"t"+sUid(),name:k.name||"",start:at(k.startOff),end:at(k.endOff),needed:k.needed||0,people:[],notes:k.notes||""};})};})};
+  document.getElementById("sched-modal").style.display="flex";renderTplEditor();
+  if(!t)setTimeout(function(){var el=document.getElementById("tpl-name");if(el)el.focus();},30);
+}
+function renderTplEditor(){
+  var jobsHtml=SD.jobs.map(function(j,ji){
+    var col=jobColor(j,ji);
+    var tasks=j.tasks.map(function(t,ti){
+      return '<div class="sd-task">'+
+        '<input class="inp sd-tn" id="sd-tn-'+ji+'-'+ti+'" value="'+hEsc(t.name)+'" placeholder="Task (e.g. Prep casserole)" onchange="sdSet('+ji+','+ti+',\'name\',this.value)">'+
+        '<input class="inp sd-tt" type="time" value="'+hEsc(t.start)+'" onchange="sdSet('+ji+','+ti+',\'start\',this.value,1)" aria-label="Start">'+
+        '<input class="inp sd-tt" type="time" value="'+hEsc(t.end)+'" onchange="sdSet('+ji+','+ti+',\'end\',this.value,1)" aria-label="End">'+
+        '<label class="sd-need">Need<input class="inp" type="number" min="0" value="'+(+t.needed||0)+'" onchange="sdSet('+ji+','+ti+',\'needed\',parseInt(this.value)||0,1)"></label>'+
+        '<button class="sd-x" onclick="sdDelTask('+ji+','+ti+')" aria-label="Remove task">×</button>'+
+      '</div>';}).join("");
+    return '<div class="sd-job" style="--c:'+col+'"><div class="sd-jh"><i></i><input class="inp sd-jn" value="'+hEsc(j.name)+'" placeholder="Job name (e.g. Kitchen)" onchange="sdSet('+ji+',null,\'name\',this.value)">'+
+      '<button class="sd-x" title="Move up" onclick="sdMoveJob('+ji+',-1)">↑</button><button class="sd-x" title="Move down" onclick="sdMoveJob('+ji+',1)">↓</button><button class="sd-x" onclick="sdDelJob('+ji+')" title="Remove job">×</button></div>'+
+      '<div class="sd-th"><span>Task</span><span>Start</span><span>End</span><span>Need</span><span></span></div>'+
+      (tasks||'<div class="card-s" style="padding:6px 2px">No tasks yet.</div>')+
+      '<button class="btn btn-sm" style="margin-top:8px" onclick="sdAddTask('+ji+')">+ Task</button></div>';
+  }).join("");
+  document.getElementById("sched-inner").innerHTML=
+    '<div class="modal-header"><div><div class="modal-eyebrow">Schedule template</div><h2 class="modal-title">'+(SD.tplId?'Edit template':'New template')+'</h2></div><button class="xbtn" onclick="closeSchedEditor()" aria-label="Close">✕</button></div>'+
+    '<div class="sd-top"><div style="grid-column:1/-1"><label class="lbl" for="tpl-name">Template name</label><input class="inp" id="tpl-name" value="'+hEsc(SD.name)+'" placeholder="e.g. Dinner schedule" oninput="SD.name=this.value;var x=document.getElementById(\'tpl-err\');if(x)x.style.display=\'none\'"></div>'+
+      '<div><label class="lbl">Event starts</label><input class="inp" type="time" value="'+hEsc(SD.startTime)+'" onchange="SD.startTime=this.value;renderTplEditor()"></div>'+
+      '<div><label class="lbl">Event ends</label><input class="inp" type="time" value="'+hEsc(SD.endTime)+'" onchange="SD.endTime=this.value;renderTplEditor()"></div></div>'+
+    '<div class="sd-hint">Set the event’s usual start time, then give each task its times. When you use this template on an event, every task moves with that event’s start (a task 1 hour before here stays 1 hour before). People are picked on each event.</div>'+
+    jobsHtml+
+    '<div class="sd-add"><span class="card-s">Add a job:</span>'+JOB_PRESETS.map(function(p){return '<button class="btn btn-sm" onclick="sdAddJob(\''+p+'\')">'+p+'</button>';}).join("")+'<button class="btn btn-sm" onclick="sdAddJob(\'\')">+ Other</button></div>'+
+    '<div id="tpl-err" style="display:none;color:#b91c1c;font-size:13px;margin-top:10px"></div>'+
+    '<div class="sd-foot"><button class="btn" onclick="closeSchedEditor()">Cancel</button><button class="btn btn-primary" onclick="saveTplEditor()">&#10003; Save template</button></div>';
+}
+async function saveTplEditor(){
+  var err=function(m){var el=document.getElementById("tpl-err");el.textContent=m;el.style.display="block";};
+  var name=(SD.name||"").trim();if(!name){err("Please give the template a name.");var n=document.getElementById("tpl-name");if(n)n.focus();return;}
+  if(!SD.jobs.length){err("Add at least one job.");return;}
+  var ex=TEMPLATES.find(function(t){return t.name.toLowerCase()===name.toLowerCase()&&t.id!==SD.tplId;});
+  if(ex){err("There’s already a template called “"+ex.name+"”. Pick another name.");return;}
+  SD.jobs.forEach(function(j,ji){if(!j.name.trim())j.name="Job "+(ji+1);j.tasks=j.tasks.filter(function(t){return t.name.trim()||t.start;});j.tasks.forEach(function(t,ti){if(!t.name.trim())t.name="Task "+(ti+1);});});
+  var base=tMin(SD.startTime);
+  if(base==null){var all=[];SD.jobs.forEach(function(j){j.tasks.forEach(function(t){if(tMin(t.start)!=null)all.push(tMin(t.start));});});base=all.length?Math.min.apply(null,all):null;}
+  var off=function(t){var m=tMin(t);return m==null||base==null?null:m-base;};
+  var body={baseStart:base==null?null:mT(base),baseEnd:SD.endTime||null,endOff:off(SD.endTime),
+    jobs:SD.jobs.map(function(j){return {name:j.name,color:j.color,tasks:j.tasks.map(function(t){return {name:t.name,startOff:off(t.start),endOff:off(t.end),needed:+t.needed||0,notes:t.notes||""};})};})};
+  var tpl={id:SD.tplId||("tpl"+sUid()),name:name,jobs:body};
+  if(!(await saveTemplate(tpl)))return;
+  var cur=TEMPLATES.find(function(t){return t.id===tpl.id;});if(cur)Object.assign(cur,tpl);else TEMPLATES.push(tpl);
+  TEMPLATES.sort(function(a,b){return a.name.localeCompare(b.name);});
+  closeSchedEditor();renderVolunteers();showToast("Template “"+name+"” saved");
+}
+
 /* ═════ Printable schedule ═════ */
 function schedPrintCss(){return '<style>#print-overlay *{box-sizing:border-box}#print-overlay{font-family:"Helvetica Neue",Arial,sans-serif;color:#1a1a1a;font-size:10.5pt;background:#fff}'+
   '#print-overlay .sp-h{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #1B3254;padding-bottom:10px;margin-bottom:14px}'+
@@ -1805,10 +1869,10 @@ function renderVolunteers(){
   var rows=list.map(function(v){var up=upcomingFor(v.id),nx=up[0];
     return '<tr'+(v.active===false?' style="opacity:.5"':'')+'><td><div style="display:flex;align-items:center;gap:10px"><span class="pv-av sm">'+hEsc(initials(v.name))+'</span><b>'+hEsc(v.name)+'</b></div></td><td>'+hEsc(v.phone||"")+'</td><td>'+hEsc(v.email||"")+'</td><td class="num">'+up.length+'</td><td>'+(nx?'<a href="#" onclick="showDetail('+nx.e.id+');activeDetailTab=\'schedule\';renderDetail(events.find(function(x){return x.id==='+nx.e.id+'}));return false">'+hEsc(fD(nx.e.date).replace(/, \d{4}$/,""))+' · '+hEsc(nx.t.name)+'</a>':'<span style="color:var(--label-3)">—</span>')+'</td><td style="text-align:right"><button class="btn btn-sm" onclick="editVol(\''+v.id+'\')">Edit</button></td></tr>';}).join("");
   var tpls=TEMPLATES.map(function(t){var b=t.jobs||{},js=b.jobs||[],n=js.reduce(function(s,j){return s+j.tasks.length;},0);
-    return '<div class="tp-row"><div style="min-width:0"><b>'+hEsc(t.name)+'</b><div class="card-s">'+js.map(function(j){return hEsc(j.name)+" ("+j.tasks.length+")";}).join(" · ")+(b.baseStart?' · starts '+hEsc(fT(b.baseStart)):'')+'</div></div><span class="card-s">'+n+' task'+(n===1?'':'s')+'</span><button class="btn btn-sm" onclick="renameTemplate(\''+t.id+'\')">Rename</button><button class="btn btn-sm btn-danger" onclick="deleteTemplate(\''+t.id+'\')">Delete</button></div>';}).join("");
-  el.innerHTML='<div class="ph"><div><div class="eyebrow">Roster &amp; job templates</div><div class="pt">Volunteers</div></div><div class="fr"><input class="inp" style="width:220px" placeholder="Search" value="'+hEsc(volSearch)+'" oninput="volSearch=this.value;renderVolunteers();var i=document.querySelector(\'#panel-volunteers .ph input\');i.focus();i.setSelectionRange(i.value.length,i.value.length)"><button class="btn btn-gold" onclick="editVol(null)">+ Add volunteer</button></div></div>'+
+    return '<div class="tp-row"><div style="min-width:0"><b>'+hEsc(t.name)+'</b><div class="card-s">'+js.map(function(j){return hEsc(j.name)+" ("+j.tasks.length+")";}).join(" · ")+(b.baseStart?' · starts '+hEsc(fT(b.baseStart)):'')+'</div></div><span class="card-s">'+n+' task'+(n===1?'':'s')+'</span><button class="btn btn-sm" onclick="openTplEditor(\''+t.id+'\')">Edit</button><button class="btn btn-sm" onclick="renameTemplate(\''+t.id+'\')">Rename</button><button class="btn btn-sm btn-danger" onclick="deleteTemplate(\''+t.id+'\')">Delete</button></div>';}).join("");
+  el.innerHTML='<div class="ph"><div><div class="eyebrow">Volunteers &amp; schedule templates</div><div class="pt">Scheduling</div></div><div class="fr"><input class="inp" style="width:220px" placeholder="Search" value="'+hEsc(volSearch)+'" oninput="volSearch=this.value;renderVolunteers();var i=document.querySelector(\'#panel-volunteers .ph input\');i.focus();i.setSelectionRange(i.value.length,i.value.length)"><button class="btn btn-gold" onclick="editVol(null)">+ Add volunteer</button></div></div>'+
     '<div class="card" style="margin-bottom:16px"><div class="card-h"><div class="card-t">Roster</div><div class="card-s">'+VOLS.filter(function(v){return v.active!==false;}).length+' active</div></div><div style="overflow-x:auto"><table style="width:100%;min-width:620px"><thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Upcoming</th><th>Next shift</th><th></th></tr></thead><tbody>'+(rows||'<tr><td colspan="6" class="card-s">No volunteers match.</td></tr>')+'</tbody></table></div></div>'+
-    '<div class="card"><div class="card-h"><div class="card-t">Job templates</div><div class="card-s">Build a schedule on an event, then “Save as template” to reuse it</div></div>'+(tpls||'<div class="card-s">No templates yet.</div>')+'</div>';
+    '<div class="card"><div class="card-h"><div class="card-t">Schedule templates</div><div class="card-s">Make one here, or build a schedule on an event and “Save as template”</div></div>'+(tpls||'<div class="card-s">No templates yet.</div>')+'<div style="margin-top:12px;padding-top:12px;border-top:.5px solid var(--sep)"><button class="btn btn-gold" onclick="openTplEditor(null)">+ New template</button></div></div>';
 }
 function editVol(id){
   var v=id?Object.assign({},volById(id)):{id:"v"+sUid(),name:"",phone:"",email:"",teams:"",notes:"",active:true};
@@ -1842,6 +1906,183 @@ async function deleteTemplate(id){var t=TEMPLATES.find(function(x){return x.id==
   try{const q=new URLSearchParams(location.search).get("event");if(q){history.replaceState(null,"",location.pathname);pendingEv=q;openPendingEv();}}catch(_){}
   document.addEventListener("visibilitychange",refreshFromServer);window.addEventListener("focus",refreshFromServer);setInterval(refreshFromServer,60000);
 })();
+/* ===== Budget report: actual cost by budget (Mug / Internal / External) and event type (2026-11-23) =====
+   Every event type rolls up into one of three budgets. Which budget a type belongs to is shared for everyone
+   (table fb_settings, id 'budget_map') and editable on the page. One row per type with its actual cost
+   (sum of each event's financials.totalCost = purchases minus credits), a subtotal per budget, and a total.
+   Pick budgets or single types; the report title names what's picked. Year filter, "completed only",
+   event-by-event lines, print (DELC letterhead) and CSV. Report choices are remembered on this device. */
+var BUDGETS=["Mug","Internal","External"];
+var BUDGET_DEFAULT={}; /* Derek assigns every type himself */
+var budgetMap=null,budgetMapState="",budgetMapOpen=null;
+var budgetState=(function(){try{return JSON.parse(localStorage.getItem("fb_budget")||"null")||{};}catch(e){return {};}})();
+var budgetOpen={};
+function budgetSave(){try{localStorage.setItem("fb_budget",JSON.stringify(budgetState));}catch(e){}}
+function budgetTypes(){var t={};events.forEach(function(e){if(e.type)t[e.type]=1;});return Object.keys(t).sort(function(a,b){return a.localeCompare(b);});}
+function budgetOf(t){var m=budgetMap||BUDGET_DEFAULT;return BUDGETS.indexOf(m[t])>=0?m[t]:"Not assigned";}
+function budgetGroups(){var g=BUDGETS.slice();if(budgetTypes().some(function(t){return budgetOf(t)==="Not assigned";}))g.push("Not assigned");return g;}
+function budgetYears(){var y={};events.forEach(function(e){if(e.date)y[e.date.slice(0,4)]=1;});return Object.keys(y).sort().reverse();}
+function budgetSel(){var all=budgetTypes();return Array.isArray(budgetState.types)?all.filter(function(t){return budgetState.types.indexOf(t)>=0;}):all.slice();}
+function budgetYear(){var ys=budgetYears(),y=budgetState.year,cy=String(new Date().getFullYear());if(y==="all")return "all";if(ys.indexOf(y)>=0)return y;return ys.indexOf(cy)>=0?cy:(ys[0]||"all");}
+function budgetYearLabel(y){return y==="all"?"All years":y;}
+function budgetAnd(L){return L.length<2?(L[0]||""):L.slice(0,-1).join(", ")+" & "+L[L.length-1];}
+function budgetTitle(sel){
+  var all=budgetTypes();if(!sel.length)return "Nothing picked";if(sel.length===all.length)return "All budgets";
+  var full=[],partial=[];budgetGroups().forEach(function(b){var ts=all.filter(function(t){return budgetOf(t)===b;}),on=ts.filter(function(t){return sel.indexOf(t)>=0;});if(!on.length)return;if(on.length===ts.length)full.push(b);else partial=partial.concat(on);});
+  if(!partial.length)return budgetAnd(full)+(full.length===1?" budget":" budgets");
+  return budgetAnd(full.map(function(b){return b+" budget";}).concat(partial));
+}
+function budgetCost(e){return +((e.financials||{}).totalCost)||0;}
+function budgetData(){
+  var sel=budgetSel(),y=budgetYear(),done=!!budgetState.done;
+  var row=function(t){var ev=events.filter(function(e){return e.type===t&&(y==="all"||(e.date||"").slice(0,4)===y)&&(!done||e.status==="Completed");}).sort(function(a,b){return String(a.date||"").localeCompare(String(b.date||""));});
+    var cost=ev.reduce(function(s,e){return s+budgetCost(e);},0);return {type:t,ev:ev,n:ev.length,cost:cost,avg:ev.length?cost/ev.length:0};};
+  var groups=budgetGroups().map(function(b){var rows=sel.filter(function(t){return budgetOf(t)===b;}).map(row);var n=rows.reduce(function(s,r){return s+r.n;},0),c=rows.reduce(function(s,r){return s+r.cost;},0);return {budget:b,rows:rows,n:n,cost:c,avg:n?c/n:0};}).filter(function(g){return g.rows.length;});
+  var total={n:groups.reduce(function(s,g){return s+g.n;},0),cost:groups.reduce(function(s,g){return s+g.cost;},0)};total.avg=total.n?total.cost/total.n:0;
+  return {groups:groups,total:total,y:y,sel:sel,done:done};
+}
+function budgetSub(d){return budgetYearLabel(d.y)+" · "+(d.done?"completed events only":"all events")+" · "+d.total.n+" event"+(d.total.n===1?"":"s");}
+function fMoney(v){return (v<0?"-$":"$")+Math.abs(v).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
+function budgetPct(v,t){return t>0?Math.round(v/t*100):0;}
+async function budgetLoadMap(){
+  if(budgetMapState==="loading")return;budgetMapState="loading";
+  try{var r=await sb.from("fb_settings").select("data").eq("id","budget_map").maybeSingle();if(r.error)throw r.error;budgetMap=(r.data&&r.data.data&&r.data.data.map)||Object.assign({},BUDGET_DEFAULT);budgetMapState="ok";}
+  catch(e){console.warn("budget map",e);budgetMap=budgetMap||Object.assign({},BUDGET_DEFAULT);budgetMapState="error";}
+  if(activeTab==="budget")renderBudget();
+}
+async function budgetSetMap(i,v){
+  var t=budgetTypes()[i];if(!t)return;budgetMap=Object.assign({},budgetMap||BUDGET_DEFAULT);budgetMap[t]=v;renderBudget();
+  try{var who=(typeof DelcAuth!=="undefined"&&DelcAuth.getSession&&DelcAuth.getSession())||{};var r=await sb.from("fb_settings").upsert({id:"budget_map",data:{map:budgetMap},updated_at:new Date().toISOString(),updated_by:who.displayName||who.username||null});if(r.error)throw r.error;budgetMapState="ok";}
+  catch(e){console.warn(e);budgetMapState="error";alert("Couldn’t save that change for everyone — check your connection and try again.");}
+  renderBudget();
+}
+
+/* months (or years, when "All years") as columns — 2026-11-23 */
+var BUD_MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function budgetMonthsOn(){return budgetState.months!==false;}
+function budgetCols(d){if(d.y==="all")return budgetYears().slice().reverse().map(function(y){return {k:y,l:y};});return BUD_MON.map(function(l,i){return {k:String(i+1).padStart(2,"0"),l:l};});}
+function budgetColOf(e,d){return d.y==="all"?(e.date||"").slice(0,4):(e.date||"").slice(5,7);}
+function budgetSplit(evs,d,cols){var o={};cols.forEach(function(c){o[c.k]=0;});evs.forEach(function(e){var k=budgetColOf(e,d);if(k in o)o[k]+=budgetCost(e);});return o;}
+function fWhole(v){return (v<0?"-$":"$")+Math.round(Math.abs(v)).toLocaleString("en-US");}
+function budgetCell(v){return Math.round(v)===0?'<span class="bud-z">—</span>':fWhole(v);}
+function budgetMonthTable(d){
+  var cols=budgetCols(d),allEv=[];d.groups.forEach(function(g){g.rows.forEach(function(r){allEv=allEv.concat(r.ev);});});
+  var tot=budgetSplit(allEv,d,cols);
+  var tds=function(o){return cols.map(function(c){return '<td class="r num">'+budgetCell(o[c.k])+'</td>';}).join("");};
+  var body=d.groups.map(function(g){var gev=[];g.rows.forEach(function(r){gev=gev.concat(r.ev);});
+    var head='<tr class="bud-grow"><td>'+hEsc(g.budget)+(g.budget==="Not assigned"?"":" budget")+'</td>'+tds(budgetSplit(gev,d,cols))+'<td class="r num">'+fWhole(g.cost)+'</td></tr>';
+    return head+g.rows.map(function(r){var open=!!budgetOpen[r.type]||!!budgetState.detail;
+      var main='<tr class="bud-row" onclick="budgetOpenRow(\''+encodeURIComponent(r.type)+'\')" title="Show the events"><td><span class="bud-caret">'+(open?"▾":"▸")+'</span><i class="sw" style="background:'+typeColor(r.type)+'"></i>'+hEsc(r.type)+'</td>'+tds(budgetSplit(r.ev,d,cols))+'<td class="r num"><b>'+fWhole(r.cost)+'</b></td></tr>';
+      var lines=open?r.ev.map(function(e){var k=budgetColOf(e,d);return '<tr class="bud-ev" onclick="showDetail('+e.id+')"><td>'+hEsc(e.name)+'</td>'+cols.map(function(c){return '<td class="r num">'+(c.k===k?fWhole(budgetCost(e)):"")+'</td>';}).join("")+'<td class="r num">'+fWhole(budgetCost(e))+'</td></tr>';}).join(""):"";
+      return main+lines;}).join("");}).join("");
+  return '<div class="bud-wrap"><table class="bud-table bud-mon"><thead><tr><th>Budget / event type</th>'+cols.map(function(c){return '<th class="r">'+c.l+'</th>';}).join("")+'<th class="r">Total</th></tr></thead><tbody>'+body+'</tbody><tfoot><tr><td>Total</td>'+tds(tot)+'<td class="r num">'+fWhole(d.total.cost)+'</td></tr></tfoot></table></div>';
+}
+function renderBudget(){
+  if(!budgetMap&&budgetMapState!=="loading")budgetLoadMap();
+  var all=budgetTypes(),ys=budgetYears(),d=budgetData(),sel=d.sel,mxType=Math.max.apply(null,[1].concat.apply([1],d.groups.map(function(g){return g.rows.map(function(r){return r.cost;});})));
+  /* budget tiles */
+  var tiles=budgetGroups().map(function(b){var ts=all.filter(function(t){return budgetOf(t)===b;});var c=0,n=0;ts.forEach(function(t){events.forEach(function(e){if(e.type===t&&(d.y==="all"||(e.date||"").slice(0,4)===d.y)&&(!d.done||e.status==="Completed")){c+=budgetCost(e);n++;}});});
+    return '<div class="bud-tile'+(b==="Not assigned"?" warn":"")+'"><div class="l">'+hEsc(b)+(b==="Not assigned"?"":" budget")+'</div><div class="v">'+fMoney(c)+'</div><div class="s">'+n+' event'+(n===1?"":"s")+' · '+ts.length+' type'+(ts.length===1?"":"s")+'</div></div>';}).join("");
+  /* pickers */
+  var pick=budgetGroups().map(function(b){var ts=all.filter(function(t){return budgetOf(t)===b;});if(!ts.length)return "";var on=ts.filter(function(t){return sel.indexOf(t)>=0;}).length;
+    return '<div class="bud-grp"><label class="bud-gh"><input type="checkbox" '+(on===ts.length?"checked":"")+' onchange="budgetPickGroup(\''+b+'\',this.checked)"'+(on&&on<ts.length?' data-mixed="1"':"")+'> '+hEsc(b)+(b==="Not assigned"?"":" budget")+'</label><div class="bud-chips">'+
+      ts.map(function(t){var i=all.indexOf(t),ok=sel.indexOf(t)>=0;return '<label class="bud-chip'+(ok?" on":"")+'"><input type="checkbox" '+(ok?"checked":"")+' onchange="budgetToggle('+i+')"><i style="background:'+typeColor(t)+'"></i>'+hEsc(t)+'</label>';}).join("")+'</div></div>';}).join("");
+  /* table */
+  var body=d.groups.map(function(g){
+    var head='<tr class="bud-grow"><td>'+hEsc(g.budget)+(g.budget==="Not assigned"?"":" budget")+'</td><td class="r num">'+g.n+'</td><td class="r num">'+fMoney(g.cost)+'</td><td class="r num">'+(g.n?fMoney(g.avg):"—")+'</td><td class="r num">'+budgetPct(g.cost,d.total.cost)+'%</td></tr>';
+    return head+g.rows.map(function(r){
+      var open=!!budgetOpen[r.type]||!!budgetState.detail;
+      var main='<tr class="bud-row" onclick="budgetOpenRow(\''+encodeURIComponent(r.type)+'\')" title="Show the events"><td><span class="bud-caret">'+(open?"▾":"▸")+'</span><i class="sw" style="background:'+typeColor(r.type)+'"></i>'+hEsc(r.type)+'</td><td class="r num">'+r.n+'</td><td class="r num"><b>'+fMoney(r.cost)+'</b></td><td class="r num">'+(r.n?fMoney(r.avg):"—")+'</td><td class="bud-share"><div class="bud-bar"><div style="width:'+(r.cost>0?r.cost/mxType*100:0).toFixed(1)+'%;background:'+typeColor(r.type)+'"></div></div><span class="num">'+budgetPct(r.cost,d.total.cost)+'%</span></td></tr>';
+      var lines=open?(r.ev.length?r.ev.map(function(e){return '<tr class="bud-ev" onclick="showDetail('+e.id+')"><td>'+hEsc(e.name)+' <span class="bud-st">'+hEsc(e.status||"Scheduled")+'</span></td><td class="r">'+fD(e.date).replace(/, \d{4}$/,"")+'</td><td class="r num">'+fMoney(budgetCost(e))+'</td><td></td><td></td></tr>';}).join(""):'<tr class="bud-ev"><td colspan="5" style="color:var(--label-2)">No events of this type'+(d.y==="all"?"":" in "+d.y)+'.</td></tr>'):"";
+      return main+lines;}).join("");
+  }).join("");
+  /* which budget each type belongs to — open by itself while any type still needs a budget */
+  var unassigned=all.filter(function(t){return budgetOf(t)==="Not assigned";}).length;var mapOpen=budgetMapOpen===null?unassigned>0:budgetMapOpen;
+  var mapEd='<div class="card" style="margin-top:16px"><button class="bud-maph" onclick="budgetMapOpen=!'+mapOpen+';renderBudget()" aria-expanded="'+mapOpen+'"><span>'+(mapOpen?"▾":"▸")+' Assign each event type to a budget</span><span class="card-s">'+(budgetMapState==="error"?"⚠ couldn’t load or save — try again":unassigned?'<b style="color:#7a4a08">'+unassigned+' type'+(unassigned===1?'':'s')+' still need a budget</b>':"all assigned · shared for everyone")+'</span></button>'+
+    (mapOpen?'<div class="bud-map">'+all.map(function(t,i){var b=budgetOf(t);return '<label class="bud-mrow"><span><i class="sw" style="background:'+typeColor(t)+'"></i>'+hEsc(t)+'</span><select onchange="budgetSetMap('+i+',this.value)">'+(b==="Not assigned"?'<option selected>— Pick a budget —</option>':'')+BUDGETS.map(function(x){return '<option value="'+x+'"'+(x===b?" selected":"")+'>'+x+'</option>';}).join("")+'</select></label>';}).join("")+'<p class="card-s" style="margin:8px 0 0;grid-column:1/-1">Your picks are saved for everyone. New event types show up here as “Not assigned” until you pick their budget.</p></div>':"")+'</div>';
+  document.getElementById("panel-budget").innerHTML=
+    '<div class="ph"><div><div class="eyebrow">Budgeting · Service &amp; Hospitality</div><div class="pt">Yearly overview</div></div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="budgetCsv()">⬇ Download CSV</button><button class="btn btn-primary" onclick="budgetPrint()">🖨 Print</button></div></div>'+
+    '<div class="bud-tiles">'+tiles+'</div>'+(unassigned?mapEd.replace('margin-top:16px','margin-bottom:16px'):'')+
+    '<div class="card" style="margin-bottom:16px"><div class="card-h"><div class="card-t">What to include</div><div class="card-s"><button class="bud-link" onclick="budgetAll(true)">All</button> · <button class="bud-link" onclick="budgetAll(false)">None</button></div></div>'+
+      '<div class="bud-pick">'+pick+'</div>'+
+      '<div class="bud-opts"><label>Year <select id="bud-year" onchange="budgetSetYear(this.value)"><option value="all"'+(d.y==="all"?" selected":"")+'>All years</option>'+ys.map(function(y){return '<option value="'+y+'"'+(y===d.y?" selected":"")+'>'+y+'</option>';}).join("")+'</select></label>'+
+      '<label class="bud-check"><input type="checkbox" '+(d.done?"checked":"")+' onchange="budgetSet(\'done\',this.checked)"> Completed events only</label>'+
+      '<label class="bud-check"><input type="checkbox" '+(budgetMonthsOn()?"checked":"")+' onchange="budgetSet(\'months\',this.checked)"> '+(d.y==="all"?"Years":"Months")+' as columns</label>'+'<label class="bud-check"><input type="checkbox" '+(budgetState.detail?"checked":"")+' onchange="budgetSet(\'detail\',this.checked)"> Show each event</label></div></div>'+
+    '<div class="card"><div class="bud-head"><div class="bud-title">Actual cost — '+hEsc(budgetTitle(sel))+'</div><div class="card-s">'+hEsc(budgetSub(d))+'</div></div>'+
+      (sel.length&&budgetMonthsOn()?budgetMonthTable(d)+'<p class="card-s" style="margin-top:10px">Actual cost by '+(d.y==="all"?"year":"month of the event date")+', rounded to whole dollars. Click a type to see its events.</p>':sel.length?'<div class="bud-wrap"><table class="bud-table"><thead><tr><th>Budget / event type</th><th class="r">Events</th><th class="r">Actual cost</th><th class="r">Avg. per event</th><th>Share of cost</th></tr></thead><tbody>'+body+'</tbody>'+
+      '<tfoot><tr><td>Total</td><td class="r num">'+d.total.n+'</td><td class="r num">'+fMoney(d.total.cost)+'</td><td class="r num">'+(d.total.n?fMoney(d.total.avg):"—")+'</td><td></td></tr></tfoot></table></div>'+
+      '<p class="card-s" style="margin-top:10px">Actual cost = each event\'s purchases minus credits, as entered on its Purchases tab. Click a type to see its events.</p>'
+      :'<p class="card-s">Pick at least one budget or event type above.</p>')+'</div>'+(unassigned?'':mapEd);
+  document.querySelectorAll('#panel-budget input[data-mixed]').forEach(function(x){x.indeterminate=true;});
+}
+function budgetToggle(i){var all=budgetTypes(),t=all[i],sel=budgetSel(),k=sel.indexOf(t);if(k>=0)sel.splice(k,1);else sel.push(t);budgetState.types=sel;budgetSave();renderBudget();}
+function budgetPickGroup(b,on){var sel=budgetSel(),ts=budgetTypes().filter(function(t){return budgetOf(t)===b;});sel=sel.filter(function(t){return ts.indexOf(t)<0;});if(on)sel=sel.concat(ts);budgetState.types=sel;budgetSave();renderBudget();}
+function budgetAll(on){budgetState.types=on?budgetTypes():[];budgetSave();renderBudget();}
+function budgetSetYear(v){budgetState.year=v;budgetSave();renderBudget();}
+function budgetSet(k,v){budgetState[k]=v;budgetSave();renderBudget();}
+function budgetOpenRow(t){t=decodeURIComponent(t);budgetOpen[t]=!budgetOpen[t];renderBudget();}
+function budgetCsv(){
+  if(budgetMonthsOn())return budgetCsvMonths();
+  var d=budgetData(),q=function(v){v=String(v==null?"":v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;},L=[["Yearly overview — "+budgetTitle(d.sel)],[budgetSub(d)],[],["Budget","Event type","Events","Actual cost","Avg per event"]];
+  d.groups.forEach(function(g){g.rows.forEach(function(r){L.push([g.budget,r.type,r.n,r.cost.toFixed(2),r.n?r.avg.toFixed(2):""]);if(budgetState.detail)r.ev.forEach(function(e){L.push([g.budget,"   "+e.name+" ("+(e.date||"")+")","",budgetCost(e).toFixed(2),""]);});});
+    L.push([g.budget+" budget total","",g.n,g.cost.toFixed(2),g.n?g.avg.toFixed(2):""]);});
+  L.push(["Total","",d.total.n,d.total.cost.toFixed(2),d.total.n?d.total.avg.toFixed(2):""]);
+  var blob=new Blob([L.map(function(r){return r.map(q).join(",");}).join("\r\n")],{type:"text/csv"}),a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);a.download="DELC budget report "+(d.y==="all"?"all years":d.y)+".csv";document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);
+}
+function budgetCsvMonths(){
+  var d=budgetData(),cols=budgetCols(d),q=function(v){v=String(v==null?"":v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  var sp=function(evs){var o=budgetSplit(evs,d,cols);return cols.map(function(c){return o[c.k].toFixed(2);});};
+  var L=[["Yearly overview — "+budgetTitle(d.sel)],[budgetSub(d)],[],["Budget","Event type"].concat(cols.map(function(c){return c.l;})).concat(["Total"])],allEv=[];
+  d.groups.forEach(function(g){var gev=[];g.rows.forEach(function(r){gev=gev.concat(r.ev);allEv=allEv.concat(r.ev);L.push([g.budget,r.type].concat(sp(r.ev)).concat([r.cost.toFixed(2)]));if(budgetState.detail)r.ev.forEach(function(e){L.push([g.budget,"   "+e.name+" ("+(e.date||"")+")"].concat(sp([e])).concat([budgetCost(e).toFixed(2)]));});});
+    L.push([g.budget+" budget total",""].concat(sp(gev)).concat([g.cost.toFixed(2)]));});
+  L.push(["Total",""].concat(sp(allEv)).concat([d.total.cost.toFixed(2)]));
+  var blob=new Blob([L.map(function(r){return r.map(q).join(",");}).join("\r\n")],{type:"text/csv"}),a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);a.download="DELC budget report by "+(d.y==="all"?"year":"month "+d.y)+".csv";document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);
+}
+function budgetPrint(){
+  var d=budgetData(),title=budgetTitle(d.sel),ov=document.getElementById("print-overlay");
+  var rows=d.groups.map(function(g){return '<tr class="g"><td>'+hEsc(g.budget)+(g.budget==="Not assigned"?"":" budget")+'</td><td class="r">'+g.n+'</td><td class="r">'+fMoney(g.cost)+'</td><td class="r">'+(g.n?fMoney(g.avg):"—")+'</td><td class="r">'+budgetPct(g.cost,d.total.cost)+'%</td></tr>'+
+    g.rows.map(function(r){return '<tr class="t"><td>'+hEsc(r.type)+'</td><td class="r">'+r.n+'</td><td class="r">'+fMoney(r.cost)+'</td><td class="r">'+(r.n?fMoney(r.avg):"—")+'</td><td class="r">'+budgetPct(r.cost,d.total.cost)+'%</td></tr>'+
+      (budgetState.detail?r.ev.map(function(e){return '<tr class="e"><td>'+hEsc(e.name)+' · '+fD(e.date)+'</td><td></td><td class="r">'+fMoney(budgetCost(e))+'</td><td></td><td></td></tr>';}).join(""):"");}).join("");}).join("");
+  var head=window.DELC&&DELC.letterhead?DELC.letterhead({title:"Yearly overview — "+title,sub:budgetSub(d),right:"Actual cost by budget<br>Service &amp; Hospitality"}):
+    '<div style="border-bottom:3px solid #1B3254;padding-bottom:10px;margin-bottom:16px"><div style="font-size:10pt;color:#5d6a82;font-weight:700">Duncansville Evangelical Lutheran Church — Service &amp; Hospitality</div><div style="font-size:20pt;font-weight:900;color:#1B3254">Yearly overview — '+hEsc(title)+'</div><div style="font-size:9pt;color:#5d6a82">'+hEsc(budgetSub(d))+'</div></div>';
+  ov.innerHTML='<style>#print-overlay{font-family:"Helvetica Neue",Arial,sans-serif;color:#1a1a1a;font-size:11pt}#print-overlay table{width:100%;border-collapse:collapse;margin-top:6px}#print-overlay th{text-align:left;font-size:9pt;color:#5d6a82;text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid #1B3254;padding:6px 8px}#print-overlay td{padding:6px 8px;border-bottom:1px solid #e3e8f0}#print-overlay .r{text-align:right}#print-overlay tr.g td{font-weight:800;background:#eef1f6;color:#1B3254}#print-overlay tr.t td:first-child{padding-left:20px}#print-overlay tr.e td{font-size:9.5pt;color:#4a566d}#print-overlay tr.e td:first-child{padding-left:36px}#print-overlay tfoot td{font-weight:800;border-top:2px solid #1B3254;border-bottom:none}#print-overlay .note{font-size:8.5pt;color:#5d6a82;margin-top:14px}#print-overlay .close-btn{position:fixed;top:20px;right:20px;background:#1B3254;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer;z-index:10000}#print-overlay .print-btn{position:fixed;top:20px;right:120px;background:#fff;color:#1B3254;border:1px solid #1B3254;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer;z-index:10000}@media print{#print-overlay .close-btn,#print-overlay .print-btn{display:none}#print-overlay tr.g td{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style>'+
+    '<button class="print-btn" onclick="window.print()">🖨 Print</button><button class="close-btn" onclick="closePrintOverlay()">✕ Close</button>'+head+
+    (d.sel.length&&budgetMonthsOn()?budgetMonthTable(d).replace(/ onclick="[^"]*"/g,"").replace(/<span class="bud-caret">[^<]*<\/span>/g,"").replace(/<i class="sw"[^>]*><\/i>/g,"")+'<style>@page{size:landscape;margin:.4in}#print-overlay .bud-mon{font-size:8.5pt}#print-overlay .bud-mon td,#print-overlay .bud-mon th{padding:4px 5px;white-space:nowrap}#print-overlay .bud-grow td{font-weight:800;background:#eef1f6;color:#1B3254;-webkit-print-color-adjust:exact;print-color-adjust:exact}#print-overlay .bud-row td:first-child{padding-left:14px}#print-overlay .bud-ev td{color:#4a566d;font-size:8pt}#print-overlay .bud-ev td:first-child{padding-left:26px}#print-overlay .bud-z{color:#b4bccb}</style>':d.sel.length?'<table><thead><tr><th>Budget / event type</th><th class="r">Events</th><th class="r">Actual cost</th><th class="r">Avg. per event</th><th class="r">Share</th></tr></thead><tbody>'+rows+'</tbody><tfoot><tr><td>Total</td><td class="r">'+d.total.n+'</td><td class="r">'+fMoney(d.total.cost)+'</td><td class="r">'+(d.total.n?fMoney(d.total.avg):"—")+'</td><td class="r">100%</td></tr></tfoot></table>':'<p>Nothing picked.</p>')+
+    '<div class="note">Actual cost = each event\'s purchases minus credits. Printed '+new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})+' from delcEVENTS.</div>';
+  ov.style.display="block";document.body.style.overflow="hidden";setTimeout(function(){window.print();},250);
+}
+(function(){var st=document.createElement("style");st.textContent=
+  ".bud-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}"+
+  ".bud-tile{background:#fff;border-radius:16px;padding:14px 18px;border:1px solid var(--border,#e3e8f0)}.bud-tile .l{font-size:13px;font-weight:700;color:var(--label-2,#5d6a82)}.bud-tile .v{font-size:26px;font-weight:800;color:var(--navy,#1B3254);margin-top:2px}.bud-tile .s{font-size:12px;color:var(--label-2,#5d6a82)}"+
+  ".bud-tile.warn{background:#fff8ee;border-color:#ecd58f}.bud-tile.warn .v{color:#7a4a08}"+
+  ".bud-pick{display:flex;flex-direction:column;gap:12px}.bud-gh{display:inline-flex;align-items:center;gap:7px;font-weight:800;font-size:14px;color:var(--navy,#1B3254);margin-bottom:6px;cursor:pointer}"+
+  ".bud-chips{display:flex;flex-wrap:wrap;gap:8px}"+
+  ".bud-chip{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;border:1.5px solid var(--border,#dbe1ea);background:#fff;font-size:13.5px;font-weight:600;cursor:pointer;min-height:40px;box-sizing:border-box}"+
+  ".bud-chip input{margin:0}.bud-chip i{width:9px;height:9px;border-radius:50%}.bud-chip.on{border-color:var(--navy,#1B3254);background:#e6ecf5;color:var(--navy,#1B3254)}"+
+  ".bud-opts{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-top:14px;font-size:13.5px;font-weight:600}"+
+  ".bud-opts select,.bud-mrow select{font:inherit;margin-left:6px;padding:6px 10px;border-radius:8px;border:1px solid var(--border,#dbe1ea);background:#fff}"+
+  ".bud-check{display:inline-flex;align-items:center;gap:6px;cursor:pointer}"+
+  ".bud-link{background:none;border:none;color:var(--navy,#1B3254);font:inherit;font-weight:700;cursor:pointer;padding:0;text-decoration:underline}"+
+  ".bud-head{margin-bottom:10px}.bud-title{font-size:20px;font-weight:800;color:var(--navy,#1B3254);letter-spacing:-.01em}"+
+  ".bud-wrap{overflow-x:auto}.bud-table{width:100%;border-collapse:collapse;min-width:560px}"+
+  ".bud-table th{text-align:left;font-size:11.5px;color:var(--label-2,#5d6a82);text-transform:uppercase;letter-spacing:.04em;padding:8px 10px;border-bottom:2px solid var(--navy,#1B3254)}"+
+  ".bud-table td{padding:9px 10px;border-bottom:1px solid var(--border,#e3e8f0);font-size:14px}.bud-table .r{text-align:right}"+
+  ".bud-grow td{background:#eef1f6;font-weight:800;color:var(--navy,#1B3254);font-size:14.5px}"+
+  ".bud-row{cursor:pointer}.bud-row:hover{background:#f5f7fb}.bud-row td:first-child{font-weight:700;padding-left:22px}"+
+  ".bud-caret{display:inline-block;width:14px;color:var(--label-2,#5d6a82)}.bud-row .sw,.bud-mrow .sw{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px}"+
+  ".bud-ev{cursor:pointer;background:#fafbfd}.bud-ev td{font-size:13px;color:var(--label-2,#4a566d)}.bud-ev td:first-child{padding-left:58px}"+
+  ".bud-st{font-size:11px;font-weight:700;background:#e6ecf5;color:var(--navy,#1B3254);border-radius:999px;padding:1px 7px;margin-left:4px}"+
+  ".bud-share{display:flex;align-items:center;gap:8px;min-width:150px}.bud-bar{flex:1;height:8px;background:#eef1f6;border-radius:4px;overflow:hidden}.bud-bar div{height:100%;border-radius:4px}"+
+  ".bud-table tfoot td{font-weight:800;border-top:2px solid var(--navy,#1B3254);border-bottom:none;font-size:14.5px}"+
+  ".bud-maph{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;background:none;border:none;font:inherit;font-weight:800;font-size:15px;color:var(--navy,#1B3254);cursor:pointer;padding:0;text-align:left;flex-wrap:wrap}"+
+  ".bud-map{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px 18px;margin-top:12px}"+
+  ".bud-mon{min-width:980px}.bud-mon td,.bud-mon th{padding:8px 7px;white-space:nowrap}.bud-mon td:first-child,.bud-mon th:first-child{position:sticky;left:0;background:#fff;z-index:1;min-width:170px}.bud-mon .bud-grow td:first-child{background:#eef1f6}.bud-mon .bud-ev td:first-child{background:#fafbfd;padding-left:40px;white-space:normal}.bud-mon tfoot td:first-child{background:#fff}.bud-mon .bud-row:hover td:first-child{background:#f5f7fb}.bud-z{color:#b4bccb}"+
+  ".bud-mrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border,#eef1f6);font-size:14px;font-weight:600}";
+  document.head.appendChild(st);})();
+
 </script>
 </body>
 </html>
