@@ -384,6 +384,8 @@ tbody tr:last-child td{border-bottom:none}
 .sd-x{width:30px;height:30px;border-radius:50%;border:none;background:var(--fill);color:var(--label-2);cursor:pointer;font-size:15px;font-weight:600;flex-shrink:0;font-family:inherit}
 .sd-x:hover{background:var(--fill-2);color:var(--label)}
 .sd-people{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.sd-day{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px}.sd-day select.inp{width:auto;padding-right:28px}.sd-day input[type=number]{width:62px;text-align:center}.sd-any{display:flex;gap:6px;align-items:center;margin-left:6px;cursor:pointer}.sd-tt:disabled{opacity:.35}
+.tl-off{color:var(--label-2,#555);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;right:0}
 .pchip{display:inline-flex;align-items:center;gap:4px;background:color-mix(in srgb,var(--c,#1B3254) 13%,#fff);color:var(--label);border-radius:980px;padding:4px 4px 4px 11px;font-size:13px;font-weight:500}
 .pchip button{border:none;background:transparent;color:var(--label-2);cursor:pointer;font-size:15px;line-height:1;width:20px;height:20px;border-radius:50%}
 .pchip button:hover{background:rgba(0,0,0,.08)}
@@ -1370,7 +1372,7 @@ function printReport(id){
     </div>
   </div>
   <div class="sec"><div class="st">Volunteer Schedule${e.startTime?" · Event "+fTR(e.startTime,e.endTime):""}</div>
-    ${evJobs(e).length?evJobs(e).map((j,ji)=>`<div style="font-weight:700;color:#1B3254;margin:8px 0 4px">${hEsc(j.name)}</div><table><thead><tr><th>Time</th><th>Task</th><th>Volunteers</th></tr></thead><tbody>${j.tasks.map(t=>{const open=Math.max(0,(+t.needed||0)-(t.people||[]).length);return `<tr><td style="white-space:nowrap">${fTR(t.start,t.end)}</td><td><strong>${hEsc(t.name)}</strong></td><td>${hEsc((t.people||[]).map(volName).join(", "))||"—"}${open?` <span style="color:#b45309">(${open} open)</span>`:""}</td></tr>`;}).join("")}</tbody></table>`).join(""):`<table><thead><tr><th>Volunteer</th><th class="c">Kitchen Prep</th><th class="c">Kitchen Event</th><th class="c">Hosp. Prep</th><th class="c">Hosp. Event</th></tr></thead>
+    ${evJobs(e).length?evJobs(e).map((j,ji)=>`<div style="font-weight:700;color:#1B3254;margin:8px 0 4px">${hEsc(j.name)}</div><table><thead><tr><th>Time</th><th>Task</th><th>Volunteers</th></tr></thead><tbody>${j.tasks.map(t=>{const open=Math.max(0,(+t.needed||0)-(t.people||[]).length);return `<tr><td style="white-space:nowrap">${taskWhen(t,e)}</td><td><strong>${hEsc(t.name)}</strong></td><td>${hEsc((t.people||[]).map(volName).join(", "))||"—"}${open?` <span style="color:#b45309">(${open} open)</span>`:""}</td></tr>`;}).join("")}</tbody></table>`).join(""):`<table><thead><tr><th>Volunteer</th><th class="c">Kitchen Prep</th><th class="c">Kitchen Event</th><th class="c">Hosp. Prep</th><th class="c">Hosp. Event</th></tr></thead>
     <tbody>${volRows}</tbody></table>`}
   </div>
   ${window.DELC?DELC.footer('delcEVENTS',e.name):`<div class="rf"><span>delcEVENTS — ${hEsc(e.name)}</span><span>Printed ${new Date().toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}</span></div>`}`;
@@ -1522,6 +1524,16 @@ function volName(id){var v=volById(id);return v?v.name:"(removed)";}
 function initials(n){return String(n||"?").split(/\s+/).filter(Boolean).slice(0,2).map(function(w){return w[0];}).join("").toUpperCase();}
 function jobColor(j,i){return j.color||JOB_COLORS[i%JOB_COLORS.length];}
 function evJobs(e){return (e&&e.jobs)||[];}
+/* task day + anytime (2026-11-27): task.dayOff = days from the event date (-1 = day before), task.anyTime = no set time */
+function addDaysIso(d,n){var x=new Date(d+"T12:00:00");x.setDate(x.getDate()+n);return isoOf(x);}
+function tDay(t){return parseInt(t&&t.dayOff)||0;}
+function tDate(e,t){return e&&e.date?addDaysIso(e.date,tDay(t)):"";}
+function onEventDay(t){return !tDay(t)&&!t.anyTime;}
+function dayLabel(n){return n===0?"Day of event":Math.abs(n)+" day"+(Math.abs(n)===1?"":"s")+(n<0?" before":" after");}
+function tTime(t){return t.anyTime?"Anytime":fTR(t.start,t.end);}
+function taskWhen(t,e){var n=tDay(t);if(!n)return tTime(t);var d=e&&e.date?new Date(tDate(e,t)+"T12:00:00").toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"}):dayLabel(n);return d+" · "+tTime(t);}
+function tSortV(t){return tDay(t)*2000+(t.anyTime?-1:(tMin(t.start)||0));}
+function tSort(a,b){return tSortV(a)-tSortV(b);}
 
 /* ── database ── */
 async function loadRoster(){
@@ -1541,17 +1553,18 @@ function overlaps(a1,a2,b1,b2){var x1=tMin(a1),x2=tMin(a2),y1=tMin(b1),y2=tMin(b
 /* every place this volunteer is booked on a date: [{ev,job,task}] */
 function bookings(volId,date,jobsOverride,evIdOverride){
   var out=[];
-  events.forEach(function(ev){if(ev.date!==date)return;var js=(ev.id===evIdOverride&&jobsOverride)?jobsOverride:evJobs(ev);
-    js.forEach(function(j){j.tasks.forEach(function(t){if((t.people||[]).indexOf(volId)>=0)out.push({ev:ev,job:j,task:t});});});});
+  events.forEach(function(ev){if(!ev.date)return;var js=(ev.id===evIdOverride&&jobsOverride)?jobsOverride:evJobs(ev);
+    js.forEach(function(j){j.tasks.forEach(function(t){if((t.people||[]).indexOf(volId)>=0&&tDate(ev,t)===date)out.push({ev:ev,job:j,task:t});});});});
   if(evIdOverride!=null&&!events.some(function(ev){return ev.id===evIdOverride;})&&jobsOverride)
     jobsOverride.forEach(function(j){j.tasks.forEach(function(t){if((t.people||[]).indexOf(volId)>=0)out.push({ev:{id:evIdOverride,name:"this event"},job:j,task:t});});});
   return out;
 }
 /* conflicts for one person on one task: other bookings that overlap in time */
 function clashes(volId,task,date,jobs,evId){
-  return bookings(volId,date,jobs,evId).filter(function(b){return b.task.id!==task.id&&overlaps(task.start,task.end,b.task.start,b.task.end);});
+  if(task.anyTime||!date)return [];
+  return bookings(volId,addDaysIso(date,tDay(task)),jobs,evId).filter(function(b){return b.task.id!==task.id&&!b.task.anyTime&&overlaps(task.start,task.end,b.task.start,b.task.end);});
 }
-function clashText(c){return c.map(function(b){return b.task.name+" ("+fTR(b.task.start,b.task.end)+(b.ev.id!==SD_EVENT&&b.ev.id!==currentEventId?" · "+b.ev.name:"")+")";}).join(", ");}
+function clashText(c){return c.map(function(b){return b.task.name+" ("+taskWhen(b.task,b.ev)+(b.ev.id!==SD_EVENT&&b.ev.id!==currentEventId?" · "+b.ev.name:"")+")";}).join(", ");}
 
 /* ═════ Schedule tab ═════ */
 function setSchedView(v){schedView=v;var e=events.find(function(x){return x.id===currentEventId;});if(e)renderDetailContent(e);}
@@ -1577,7 +1590,7 @@ function schedTabHtml(e){
 /* timeline */
 function tlRange(e){
   var lo=Infinity,hi=-Infinity;function add(a,b){var x=tMin(a),y=tMin(b);if(x!=null){lo=Math.min(lo,x);hi=Math.max(hi,y!=null?y:x+30);}}
-  add(e.startTime,e.endTime);evJobs(e).forEach(function(j){j.tasks.forEach(function(t){add(t.start,t.end);});});
+  add(e.startTime,e.endTime);evJobs(e).forEach(function(j){j.tasks.forEach(function(t){if(onEventDay(t))add(t.start,t.end);});});
   if(lo===Infinity)return null;lo=Math.floor(lo/60)*60;hi=Math.ceil(hi/60)*60;if(hi-lo<120)hi=lo+120;return [lo,hi];
 }
 function timelineView(e){
@@ -1590,16 +1603,17 @@ function timelineView(e){
   evJobs(e).forEach(function(j,ji){
     var col=jobColor(j,ji);
     rows+='<div class="tl-job"><i style="background:'+col+'"></i>'+hEsc(j.name||"Job")+'<span>'+j.tasks.length+' task'+(j.tasks.length===1?'':'s')+'</span></div>';
-    j.tasks.slice().sort(function(a,b){return (tMin(a.start)||0)-(tMin(b.start)||0);}).forEach(function(t){
+    j.tasks.slice().sort(tSort).forEach(function(t){
       var ppl=(t.people||[]),open=Math.max(0,(+t.needed||0)-ppl.length),names=ppl.map(volName);
       var x=tMin(t.start),y=tMin(t.end);
       var bar;
-      if(x==null){bar='<span class="tl-none">Time not set</span>';}
+      if(!onEventDay(t)){bar='<span class="tl-none tl-off">'+hEsc((tDay(t)?dayLabel(tDay(t))+' · ':'')+tTime(t)+' — '+(names.length?names.join(", "):'nobody yet'))+(open?' <b style="color:#b45309">+'+open+' open</b>':'')+'</span>';}
+      else if(x==null){bar='<span class="tl-none">Time not set</span>';}
       else{if(y==null||y<=x)y=x+30;
         var tip=tipHtml(t.name||"Task",[["Time",fTR(t.start,t.end),col]].concat(names.map(function(n){return ["",n];})).concat(open?[["Open",open+" more needed"]]:[]));
         bar='<div class="tl-bar'+(open?' open':'')+'" style="left:'+pct(x)+';width:calc('+pct(y)+' - '+pct(x)+');--c:'+col+'" data-tip="'+hEsc(tip)+'">'+
           '<span class="tl-names">'+(names.length?hEsc(names.join(", ")):'<em>Nobody yet</em>')+'</span>'+(open?'<span class="tl-open">+'+open+' open</span>':'')+'</div>';}
-      rows+='<div class="tl-row"><div class="tl-lab"><b>'+hEsc(t.name||"Task")+'</b><span>'+hEsc(fTR(t.start,t.end))+' · '+ppl.length+(+t.needed?'/'+(+t.needed):'')+'</span></div><div class="tl-track">'+grid+band+bar+'</div></div>';
+      rows+='<div class="tl-row"><div class="tl-lab"><b>'+hEsc(t.name||"Task")+'</b><span>'+hEsc(taskWhen(t,e))+' · '+ppl.length+(+t.needed?'/'+(+t.needed):'')+'</span></div><div class="tl-track">'+(onEventDay(t)?grid+band:'')+bar+'</div></div>';
     });
   });
   var key='<div class="tl-key">'+(band?'<span><i style="background:rgba(27,50,84,.09);border:1.5px solid rgba(27,50,84,.35)"></i>Event time</span>':'')+'<span><i style="background:repeating-linear-gradient(135deg,#e5e5ea 0 4px,#f5f5f7 4px 8px)"></i>Still needs people</span><span>Hover a bar for names</span></div>';
@@ -1610,18 +1624,19 @@ function timelineView(e){
 function personRows(e){
   var map={};
   evJobs(e).forEach(function(j,ji){j.tasks.forEach(function(t){(t.people||[]).forEach(function(p){(map[p]=map[p]||[]).push({job:j,ji:ji,task:t});});});});
-  return Object.keys(map).map(function(id){var list=map[id].sort(function(a,b){return (tMin(a.task.start)||0)-(tMin(b.task.start)||0);});
-    var st=list.map(function(x){return tMin(x.task.start);}).filter(function(v){return v!=null;}),en=list.map(function(x){return tMin(x.task.end)!=null?tMin(x.task.end):tMin(x.task.start);}).filter(function(v){return v!=null;});
+  return Object.keys(map).map(function(id){var list=map[id].sort(function(a,b){return tSort(a.task,b.task);}),dl=list.filter(function(x){return onEventDay(x.task);});
+    var st=dl.map(function(x){return tMin(x.task.start);}).filter(function(v){return v!=null;}),en=dl.map(function(x){return tMin(x.task.end)!=null?tMin(x.task.end):tMin(x.task.start);}).filter(function(v){return v!=null;});
     return {id:id,vol:volById(id),name:volName(id),list:list,first:st.length?Math.min.apply(null,st):null,last:en.length?Math.max.apply(null,en):null};})
    .sort(function(a,b){return (a.first==null?9999:a.first)-(b.first==null?9999:b.first)||a.name.localeCompare(b.name);});
 }
+function dl0(p){return p.list.some(function(x){return onEventDay(x.task);});}
 function personView(e){
   var ps=personRows(e);if(!ps.length)return '<div class="card card-s">Nobody is assigned yet. Use Open slots or Edit schedule to add people.</div>';
   return '<div class="pv-grid">'+ps.map(function(p){
     var v=p.vol||{},cl=0;
     var items=p.list.map(function(x){var c=clashes(p.id,x.task,e.date);cl+=c.length?1:0;
-      return '<div class="pv-item"><i style="background:'+jobColor(x.job,x.ji)+'"></i><div><b>'+hEsc(x.task.name||"Task")+'</b><span>'+hEsc(x.job.name||"Job")+'</span></div><div class="pv-t">'+hEsc(fTR(x.task.start,x.task.end))+(c.length?'<em title="'+hEsc("Overlaps: "+clashText(c))+'">⚠ overlap</em>':'')+'</div></div>';}).join("");
-    return '<div class="card pv"><div class="pv-h"><span class="pv-av">'+hEsc(initials(p.name))+'</span><div style="min-width:0"><div class="pv-n">'+hEsc(p.name)+'</div><div class="card-s">'+(p.first!=null?"On site "+fTR(mT(p.first),mT(p.last)):"Times not set")+'</div></div></div>'+
+      return '<div class="pv-item"><i style="background:'+jobColor(x.job,x.ji)+'"></i><div><b>'+hEsc(x.task.name||"Task")+'</b><span>'+hEsc(x.job.name||"Job")+'</span></div><div class="pv-t">'+hEsc(taskWhen(x.task,e))+(c.length?'<em title="'+hEsc("Overlaps: "+clashText(c))+'">⚠ overlap</em>':'')+'</div></div>';}).join("");
+    return '<div class="card pv"><div class="pv-h"><span class="pv-av">'+hEsc(initials(p.name))+'</span><div style="min-width:0"><div class="pv-n">'+hEsc(p.name)+'</div><div class="card-s">'+(p.first!=null?"On site "+fTR(mT(p.first),mT(p.last)):dl0(p)?"Times not set":"Not on event day")+'</div></div></div>'+
       ((v.phone||v.email)?'<div class="pv-c">'+(v.phone?'<a href="tel:'+hEsc(v.phone)+'">'+hEsc(v.phone)+'</a>':'')+(v.email?'<a href="mailto:'+hEsc(v.email)+'">'+hEsc(v.email)+'</a>':'')+'</div>':'')+items+'</div>';}).join("")+'</div>';
 }
 
@@ -1633,7 +1648,7 @@ function volOptions(task,date,jobs,evId,exclude){
 function openView(e){
   var rows="";
   evJobs(e).forEach(function(j,ji){j.tasks.forEach(function(t,ti){var open=Math.max(0,(+t.needed||0)-(t.people||[]).length);if(!open)return;
-    rows+='<div class="ov-row"><i style="background:'+jobColor(j,ji)+'"></i><div class="ov-what"><b>'+hEsc(t.name||"Task")+'</b><span>'+hEsc(j.name||"Job")+' · '+hEsc(fTR(t.start,t.end))+'</span>'+((t.people||[]).length?'<span>Has: '+hEsc(t.people.map(volName).join(", "))+'</span>':'')+'</div>'+
+    rows+='<div class="ov-row"><i style="background:'+jobColor(j,ji)+'"></i><div class="ov-what"><b>'+hEsc(t.name||"Task")+'</b><span>'+hEsc(j.name||"Job")+' · '+hEsc(taskWhen(t,e))+'</span>'+((t.people||[]).length?'<span>Has: '+hEsc(t.people.map(volName).join(", "))+'</span>':'')+'</div>'+
       '<span class="ov-need">Needs '+open+' more</span><select class="inp ov-sel" onchange="quickAssign('+e.id+',\''+j.id+'\',\''+t.id+'\',this.value)"><option value="">Assign…</option>'+'<option value="__new">+ New volunteer (not on the list)…</option>'+volOptions(t,e.date,null,null,t.people)+'</select></div>';});});
   return rows?'<div class="card">'+rows+'</div>':'<div class="card sc-empty"><div class="sc-empty-t">Every task is fully staffed</div><div class="card-s">Set “Needed” on a task in Edit schedule to track open spots.</div></div>';
 }
@@ -1684,9 +1699,18 @@ function sdDelJob(j){if(SD.jobs[j].tasks.some(function(t){return (t.people||[]).
 function sdAddTask(j,noRender){
   var ts=SD.jobs[j].tasks,last=ts[ts.length-1];
   var st=last&&tMin(last.end)!=null?last.end:(SD.startTime||"");var en=tMin(st)!=null?mT(tMin(st)+60):"";
-  ts.push({id:"t"+sUid(),name:"",start:st,end:en,needed:1,people:[],notes:""});
+  ts.push({id:"t"+sUid(),name:"",start:st,end:en,needed:1,people:[],notes:"",dayOff:last?tDay(last):0});
   renderSchedEditor();setTimeout(function(){var el=document.getElementById("sd-tn-"+j+"-"+(ts.length-1));if(el)el.focus();},30);
 }
+function sdDayRow(ji,ti,t){var n=tDay(t),mode=n<0?"before":n>0?"after":"of";
+  var o=function(v,l){return '<option value="'+v+'"'+(mode===v?' selected':'')+'>'+l+'</option>';};
+  return '<div class="sd-day"><select class="inp" aria-label="Which day" onchange="sdSetDay('+ji+','+ti+',this.value,null)">'+o("of","Day of event")+o("before","Days before")+o("after","Days after")+'</select>'+
+    (mode!=="of"?'<input class="inp" type="number" min="1" max="60" value="'+Math.abs(n)+'" aria-label="Number of days" onchange="sdSetDay('+ji+','+ti+',null,this.value)"><span class="card-s">day'+(Math.abs(n)===1?'':'s')+' '+mode+'</span>':'')+
+    '<label class="sd-any"><input type="checkbox"'+(t.anyTime?' checked':'')+' onchange="sdSet('+ji+','+ti+',\'anyTime\',this.checked,1)"> Anytime of day</label></div>';}
+function sdSetDay(j,t,mode,num){var k=sdTask(j,t),n=tDay(k),a;
+  if(mode!=null){a=Math.abs(n)||1;n=mode==="of"?0:mode==="before"?-a:a;}
+  if(num!=null){a=Math.max(1,Math.min(60,parseInt(num)||1));n=n<0?-a:a;}
+  k.dayOff=n;renderSchedEditor();}
 function sdDelTask(j,t){SD.jobs[j].tasks.splice(t,1);renderSchedEditor();}
 async function sdAddPerson(j,t,val){
   if(!val)return;
@@ -1708,10 +1732,10 @@ function renderSchedEditor(){
       var open=Math.max(0,(+t.needed||0)-(t.people||[]).length);
       return '<div class="sd-task">'+
         '<input class="inp sd-tn" id="sd-tn-'+ji+'-'+ti+'" value="'+hEsc(t.name)+'" placeholder="Task (e.g. Prep casserole)" onchange="sdSet('+ji+','+ti+',\'name\',this.value)">'+
-        '<input class="inp sd-tt" type="time" value="'+hEsc(t.start)+'" onchange="sdSet('+ji+','+ti+',\'start\',this.value,1)" aria-label="Start">'+
-        '<input class="inp sd-tt" type="time" value="'+hEsc(t.end)+'" onchange="sdSet('+ji+','+ti+',\'end\',this.value,1)" aria-label="End">'+
+        '<input class="inp sd-tt" type="time"'+(t.anyTime?' disabled':'')+' value="'+hEsc(t.start)+'" onchange="sdSet('+ji+','+ti+',\'start\',this.value,1)" aria-label="Start">'+
+        '<input class="inp sd-tt" type="time"'+(t.anyTime?' disabled':'')+' value="'+hEsc(t.end)+'" onchange="sdSet('+ji+','+ti+',\'end\',this.value,1)" aria-label="End">'+
         '<label class="sd-need">Need<input class="inp" type="number" min="0" value="'+(+t.needed||0)+'" onchange="sdSet('+ji+','+ti+',\'needed\',parseInt(this.value)||0,1)"></label>'+
-        '<button class="sd-x" onclick="sdDelTask('+ji+','+ti+')" aria-label="Remove task">×</button>'+
+        '<button class="sd-x" onclick="sdDelTask('+ji+','+ti+')" aria-label="Remove task">×</button>'+sdDayRow(ji,ti,t)+
         '<div class="sd-people">'+chips+(open?'<span class="pchip openc">'+open+' open</span>':'')+
           '<select class="inp sd-pick" onchange="sdAddPerson('+ji+','+ti+',this.value)"><option value="">+ Add person</option>'+'<option value="__new">+ New volunteer (not on the list)…</option>'+volOptions(t,e.date,SD.jobs,SD_EVENT,t.people)+'</select><button class="btn btn-sm" style="white-space:nowrap" onclick="sdAddPerson('+ji+','+ti+',\'__new\')">+ New person</button></div>'+
       '</div>';}).join("");
@@ -1726,28 +1750,33 @@ function renderSchedEditor(){
     '<div class="sd-top"><div><label class="lbl">Event starts</label><input class="inp" type="time" value="'+hEsc(SD.startTime)+'" onchange="SD.startTime=this.value;renderSchedEditor()"></div>'+
       '<div><label class="lbl">Event ends</label><input class="inp" type="time" value="'+hEsc(SD.endTime)+'" onchange="SD.endTime=this.value;renderSchedEditor()"></div>'+
       '<div style="grid-column:span 2"><label class="lbl">Templates</label><div class="fr" style="flex-wrap:nowrap"><select class="inp" onchange="applyTemplate(this.value)">'+tOpts+'</select><button class="btn btn-sm" style="white-space:nowrap" onclick="saveAsTemplate()"'+(SD.jobs.length?'':' disabled style="opacity:.4"')+'>Save as template</button></div></div></div>'+
-    '<div class="sd-hint">Prep and setup tasks can start before the event. People marked ⚠ are booked on another task at the same time.</div>'+
+    '<div class="sd-hint">Prep and setup tasks can start before the event, be on another day (Days before / Days after), or be “Anytime of day”. People marked ⚠ are booked on another task at the same time.</div>'+
     jobsHtml+
     '<div class="sd-add"><span class="card-s">Add a job:</span>'+JOB_PRESETS.map(function(p){return '<button class="btn btn-sm" onclick="sdAddJob(\''+p+'\')">'+p+'</button>';}).join("")+'<button class="btn btn-sm" onclick="sdAddJob(\'\')">+ Other</button></div>'+
     '<div class="sd-foot"><button class="btn" onclick="closeSchedEditor()">Cancel</button><button class="btn btn-primary" onclick="saveSchedule()">&#10003; Save schedule</button></div>';
 }
 function saveSchedule(){
   var e=events.find(function(x){return x.id===SD_EVENT;});if(!e)return;
-  SD.jobs.forEach(function(j,ji){if(!j.name.trim())j.name="Job "+(ji+1);j.tasks=j.tasks.filter(function(t){return t.name.trim()||t.people.length||t.start;});j.tasks.forEach(function(t,ti){if(!t.name.trim())t.name="Task "+(ti+1);});});
+  SD.jobs.forEach(function(j,ji){if(!j.name.trim())j.name="Job "+(ji+1);j.tasks=j.tasks.filter(function(t){return t.name.trim()||t.people.length||t.start||t.anyTime||tDay(t);});j.tasks.forEach(function(t,ti){if(!t.name.trim())t.name="Task "+(ti+1);});});
   e.startTime=SD.startTime;e.endTime=SD.endTime;e.jobs=SD.jobs;
   closeSchedEditor();saveAll();if(currentEventId===e.id){activeDetailTab="schedule";renderDetail(e);}showToast("Schedule saved");
 }
-/* templates: times saved as minutes from the event start so they shift with each event */
+/* templates: day-of times saved as minutes from the event start so they shift with each event;
+   tasks on another day keep their clock time (startAt/endAt); anytime tasks have no time */
+function tplTask(off){return function(t){var d=tDay(t),any=!!t.anyTime,o={name:t.name,needed:+t.needed||0,notes:t.notes||"",dayOff:d,anyTime:any,startOff:null,endOff:null};
+  if(!any){if(d){o.startAt=t.start||null;o.endAt=t.end||null;}else{o.startOff=off(t.start);o.endOff=off(t.end);}}return o;};}
+function tplToTask(k,at){var any=!!k.anyTime,d=parseInt(k.dayOff)||0;
+  return {id:"t"+sUid(),name:k.name||"",start:any?"":(d&&k.startAt!==undefined?(k.startAt||""):at(k.startOff)),end:any?"":(d&&k.endAt!==undefined?(k.endAt||""):at(k.endOff)),needed:k.needed||0,people:[],notes:k.notes||"",dayOff:d,anyTime:any};}
 async function saveAsTemplate(){
   var base=tMin(SD.startTime);
-  if(base==null){var all=[];SD.jobs.forEach(function(j){j.tasks.forEach(function(t){if(tMin(t.start)!=null)all.push(tMin(t.start));});});base=all.length?Math.min.apply(null,all):null;}
+  if(base==null){var all=[];SD.jobs.forEach(function(j){j.tasks.forEach(function(t){if(onEventDay(t)&&tMin(t.start)!=null)all.push(tMin(t.start));});});base=all.length?Math.min.apply(null,all):null;}
   var e=events.find(function(x){return x.id===SD_EVENT;});
   var name=prompt("Template name",(e&&e.type?e.type+" ":"")+"schedule");if(!name||!name.trim())return;name=name.trim();
   var ex=TEMPLATES.find(function(t){return t.name.toLowerCase()===name.toLowerCase();});
   if(ex&&!confirm("Replace the existing “"+ex.name+"” template?"))return;
   var off=function(t){var m=tMin(t);return m==null||base==null?null:m-base;};
   var body={baseStart:base==null?null:mT(base),baseEnd:SD.endTime||null,endOff:off(SD.endTime),
-    jobs:SD.jobs.map(function(j){return {name:j.name,color:j.color,tasks:j.tasks.map(function(t){return {name:t.name,startOff:off(t.start),endOff:off(t.end),needed:+t.needed||0,notes:t.notes||""};})};})};
+    jobs:SD.jobs.map(function(j){return {name:j.name,color:j.color,tasks:j.tasks.map(tplTask(off))};})};
   var tpl={id:ex?ex.id:"tpl"+sUid(),name:name,jobs:body};
   if(!(await saveTemplate(tpl)))return;
   if(ex)Object.assign(ex,tpl);else TEMPLATES.push(tpl);TEMPLATES.sort(function(a,b){return a.name.localeCompare(b.name);});
@@ -1759,7 +1788,7 @@ function applyTemplate(id){
   var base=tMin(SD.startTime)!=null?tMin(SD.startTime):tMin(b.baseStart);
   var at=function(o){return o==null||base==null?"":mT(base+o);};
   (b.jobs||[]).forEach(function(j){var i=SD.jobs.length;SD.jobs.push({id:"j"+sUid(),name:j.name,color:j.color||JOB_COLORS[i%JOB_COLORS.length],
-    tasks:j.tasks.map(function(t){return {id:"t"+sUid(),name:t.name,start:at(t.startOff),end:at(t.endOff),needed:t.needed||0,people:[],notes:t.notes||""};})});});
+    tasks:j.tasks.map(function(t){return tplToTask(t,at);})});});
   renderSchedEditor();showToast("Added “"+tpl.name+"” — now pick people");
 }
 
@@ -1773,7 +1802,7 @@ function openTplEditor(id){
   SD_EVENT=null;
   SD={tpl:true,tplId:t?t.id:null,name:t?t.name:"",startTime:b.baseStart||"",endTime:b.endOff!=null&&base!=null?mT(base+b.endOff):(b.baseEnd||""),
     jobs:(b.jobs||[]).map(function(j,i){return {id:"j"+sUid(),name:j.name||"",color:j.color||JOB_COLORS[i%JOB_COLORS.length],
-      tasks:(j.tasks||[]).map(function(k){return {id:"t"+sUid(),name:k.name||"",start:at(k.startOff),end:at(k.endOff),needed:k.needed||0,people:[],notes:k.notes||""};})};})};
+      tasks:(j.tasks||[]).map(function(k){return tplToTask(k,at);})};})};
   document.getElementById("sched-modal").style.display="flex";renderTplEditor();
   if(!t)setTimeout(function(){var el=document.getElementById("tpl-name");if(el)el.focus();},30);
 }
@@ -1783,10 +1812,10 @@ function renderTplEditor(){
     var tasks=j.tasks.map(function(t,ti){
       return '<div class="sd-task">'+
         '<input class="inp sd-tn" id="sd-tn-'+ji+'-'+ti+'" value="'+hEsc(t.name)+'" placeholder="Task (e.g. Prep casserole)" onchange="sdSet('+ji+','+ti+',\'name\',this.value)">'+
-        '<input class="inp sd-tt" type="time" value="'+hEsc(t.start)+'" onchange="sdSet('+ji+','+ti+',\'start\',this.value,1)" aria-label="Start">'+
-        '<input class="inp sd-tt" type="time" value="'+hEsc(t.end)+'" onchange="sdSet('+ji+','+ti+',\'end\',this.value,1)" aria-label="End">'+
+        '<input class="inp sd-tt" type="time"'+(t.anyTime?' disabled':'')+' value="'+hEsc(t.start)+'" onchange="sdSet('+ji+','+ti+',\'start\',this.value,1)" aria-label="Start">'+
+        '<input class="inp sd-tt" type="time"'+(t.anyTime?' disabled':'')+' value="'+hEsc(t.end)+'" onchange="sdSet('+ji+','+ti+',\'end\',this.value,1)" aria-label="End">'+
         '<label class="sd-need">Need<input class="inp" type="number" min="0" value="'+(+t.needed||0)+'" onchange="sdSet('+ji+','+ti+',\'needed\',parseInt(this.value)||0,1)"></label>'+
-        '<button class="sd-x" onclick="sdDelTask('+ji+','+ti+')" aria-label="Remove task">×</button>'+
+        '<button class="sd-x" onclick="sdDelTask('+ji+','+ti+')" aria-label="Remove task">×</button>'+sdDayRow(ji,ti,t)+
       '</div>';}).join("");
     return '<div class="sd-job" style="--c:'+col+'"><div class="sd-jh"><i></i><input class="inp sd-jn" value="'+hEsc(j.name)+'" placeholder="Job name (e.g. Kitchen)" onchange="sdSet('+ji+',null,\'name\',this.value)">'+
       '<button class="sd-x" title="Move up" onclick="sdMoveJob('+ji+',-1)">↑</button><button class="sd-x" title="Move down" onclick="sdMoveJob('+ji+',1)">↓</button><button class="sd-x" onclick="sdDelJob('+ji+')" title="Remove job">×</button></div>'+
@@ -1799,7 +1828,7 @@ function renderTplEditor(){
     '<div class="sd-top"><div style="grid-column:1/-1"><label class="lbl" for="tpl-name">Template name</label><input class="inp" id="tpl-name" value="'+hEsc(SD.name)+'" placeholder="e.g. Dinner schedule" oninput="SD.name=this.value;var x=document.getElementById(\'tpl-err\');if(x)x.style.display=\'none\'"></div>'+
       '<div><label class="lbl">Event starts</label><input class="inp" type="time" value="'+hEsc(SD.startTime)+'" onchange="SD.startTime=this.value;renderTplEditor()"></div>'+
       '<div><label class="lbl">Event ends</label><input class="inp" type="time" value="'+hEsc(SD.endTime)+'" onchange="SD.endTime=this.value;renderTplEditor()"></div></div>'+
-    '<div class="sd-hint">Set the event’s usual start time, then give each task its times. When you use this template on an event, every task moves with that event’s start (a task 1 hour before here stays 1 hour before). People are picked on each event.</div>'+
+    '<div class="sd-hint">Set the event’s usual start time, then give each task its times. When you use this template on an event, every task moves with that event’s start (a task 1 hour before here stays 1 hour before). Tasks set to days before or after keep the clock time you enter, and “Anytime of day” tasks have no set time. People are picked on each event.</div>'+
     jobsHtml+
     '<div class="sd-add"><span class="card-s">Add a job:</span>'+JOB_PRESETS.map(function(p){return '<button class="btn btn-sm" onclick="sdAddJob(\''+p+'\')">'+p+'</button>';}).join("")+'<button class="btn btn-sm" onclick="sdAddJob(\'\')">+ Other</button></div>'+
     '<div id="tpl-err" style="display:none;color:#b91c1c;font-size:13px;margin-top:10px"></div>'+
@@ -1811,12 +1840,12 @@ async function saveTplEditor(){
   if(!SD.jobs.length){err("Add at least one job.");return;}
   var ex=TEMPLATES.find(function(t){return t.name.toLowerCase()===name.toLowerCase()&&t.id!==SD.tplId;});
   if(ex){err("There’s already a template called “"+ex.name+"”. Pick another name.");return;}
-  SD.jobs.forEach(function(j,ji){if(!j.name.trim())j.name="Job "+(ji+1);j.tasks=j.tasks.filter(function(t){return t.name.trim()||t.start;});j.tasks.forEach(function(t,ti){if(!t.name.trim())t.name="Task "+(ti+1);});});
+  SD.jobs.forEach(function(j,ji){if(!j.name.trim())j.name="Job "+(ji+1);j.tasks=j.tasks.filter(function(t){return t.name.trim()||t.start||t.anyTime||tDay(t);});j.tasks.forEach(function(t,ti){if(!t.name.trim())t.name="Task "+(ti+1);});});
   var base=tMin(SD.startTime);
-  if(base==null){var all=[];SD.jobs.forEach(function(j){j.tasks.forEach(function(t){if(tMin(t.start)!=null)all.push(tMin(t.start));});});base=all.length?Math.min.apply(null,all):null;}
+  if(base==null){var all=[];SD.jobs.forEach(function(j){j.tasks.forEach(function(t){if(onEventDay(t)&&tMin(t.start)!=null)all.push(tMin(t.start));});});base=all.length?Math.min.apply(null,all):null;}
   var off=function(t){var m=tMin(t);return m==null||base==null?null:m-base;};
   var body={baseStart:base==null?null:mT(base),baseEnd:SD.endTime||null,endOff:off(SD.endTime),
-    jobs:SD.jobs.map(function(j){return {name:j.name,color:j.color,tasks:j.tasks.map(function(t){return {name:t.name,startOff:off(t.start),endOff:off(t.end),needed:+t.needed||0,notes:t.notes||""};})};})};
+    jobs:SD.jobs.map(function(j){return {name:j.name,color:j.color,tasks:j.tasks.map(tplTask(off))};})};
   var tpl={id:SD.tplId||("tpl"+sUid()),name:name,jobs:body};
   if(!(await saveTemplate(tpl)))return;
   var cur=TEMPLATES.find(function(t){return t.id===tpl.id;});if(cur)Object.assign(cur,tpl);else TEMPLATES.push(tpl);
@@ -1839,17 +1868,17 @@ function schedPrintCss(){return '<style>#print-overlay *{box-sizing:border-box}#
   '@media print{#print-overlay .close-btn{display:none}}</style>';}
 function schedTablesHtml(e,withCheck){
   return evJobs(e).map(function(j,ji){
-    var rows=j.tasks.slice().sort(function(a,b){return (tMin(a.start)||0)-(tMin(b.start)||0);}).map(function(t){
+    var rows=j.tasks.slice().sort(tSort).map(function(t){
       var open=Math.max(0,(+t.needed||0)-(t.people||[]).length);
       var ppl=(t.people||[]).map(function(p){return withCheck?'<span class="ck">'+hEsc(volName(p))+'</span>':hEsc(volName(p));}).join(withCheck?"":", ");
       for(var k=0;k<open;k++)ppl+=withCheck?'<span class="ck blank">________________</span>':(ppl?", ":"")+'<span class="blank">open</span>';
-      return '<tr><td class="tm">'+hEsc(fTR(t.start,t.end))+'</td><td><b>'+hEsc(t.name)+'</b>'+(t.notes?'<br><span style="color:#666;font-size:9pt">'+hEsc(t.notes)+'</span>':'')+'</td><td>'+(ppl||'<span class="blank">—</span>')+'</td></tr>';}).join("");
+      return '<tr><td class="tm">'+hEsc(taskWhen(t,e))+'</td><td><b>'+hEsc(t.name)+'</b>'+(t.notes?'<br><span style="color:#666;font-size:9pt">'+hEsc(t.notes)+'</span>':'')+'</td><td>'+(ppl||'<span class="blank">—</span>')+'</td></tr>';}).join("");
     return '<h3><i style="background:'+jobColor(j,ji)+'"></i>'+hEsc(j.name)+'</h3><table class="jt"><thead><tr><th>Time</th><th>Task</th><th>'+(withCheck?'Check in':'Volunteers')+'</th></tr></thead><tbody>'+rows+'</tbody></table>';
   }).join("");
 }
 function printSchedule(id){
   var e=events.find(function(x){return x.id===id;});if(!e)return;var s=schedStats(e),ps=personRows(e);
-  var people=ps.length?'<h3>By person</h3><table><thead><tr><th>Name</th><th>Phone</th><th>On site</th><th>Tasks</th></tr></thead><tbody>'+ps.map(function(p){var v=p.vol||{};return '<tr><td><b>'+hEsc(p.name)+'</b></td><td class="tm">'+hEsc(v.phone||"")+'</td><td class="tm">'+(p.first!=null?hEsc(fTR(mT(p.first),mT(p.last))):"")+'</td><td>'+p.list.map(function(x){return hEsc(fT(x.task.start)+" "+x.task.name);}).join("; ")+'</td></tr>';}).join("")+'</tbody></table>':"";
+  var people=ps.length?'<h3>By person</h3><table><thead><tr><th>Name</th><th>Phone</th><th>On site</th><th>Tasks</th></tr></thead><tbody>'+ps.map(function(p){var v=p.vol||{};return '<tr><td><b>'+hEsc(p.name)+'</b></td><td class="tm">'+hEsc(v.phone||"")+'</td><td class="tm">'+(p.first!=null?hEsc(fTR(mT(p.first),mT(p.last))):"")+'</td><td>'+p.list.map(function(x){return hEsc((onEventDay(x.task)?fT(x.task.start):taskWhen(x.task,e))+" "+x.task.name);}).join("; ")+'</td></tr>';}).join("")+'</tbody></table>':"";
   var ov=document.getElementById("print-overlay");
   ov.innerHTML=schedPrintCss()+'<button class="close-btn" onclick="closePrintOverlay()">✕ Close</button>'+
     (function(){var when=new Date(e.date+"T12:00:00").toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"})+(e.startTime?' · Event '+fTR(e.startTime,e.endTime):'');
