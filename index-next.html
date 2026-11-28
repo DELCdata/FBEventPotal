@@ -1693,6 +1693,12 @@ function openSchedEditor(evId){
 }
 function closeSchedEditor(){document.getElementById("sched-modal").style.display="none";SD=null;SD_EVENT=null;}
 function sdTask(j,t){return SD.jobs[j].tasks[t];}
+/* time boxes (2026-11-27): browsers fire "change" as soon as the hour is typed, and redrawing then threw the
+   cursor out before the minutes. Now a time change only updates the data; the editor redraws after you leave the box,
+   and the box you moved to keeps focus. */
+var SD_TDIRTY=0;
+function sdSetT(j,t,k,v){sdTask(j,t)[k]=v;SD_TDIRTY=1;}
+function sdBlurT(){setTimeout(function(){if(!SD_TDIRTY||!SD)return;SD_TDIRTY=0;var a=document.activeElement,id=a&&a.id;renderSchedEditor();if(id){var el=document.getElementById(id);if(el)el.focus();}},0);}
 function sdSet(j,t,k,v,rerender){var o=t==null?SD.jobs[j]:sdTask(j,t);o[k]=v;if(rerender)renderSchedEditor();}
 function sdAddJob(name){var i=SD.jobs.length;SD.jobs.push({id:"j"+sUid(),name:name||"",color:JOB_COLORS[i%JOB_COLORS.length],tasks:[]});sdAddTask(i,true);}
 function sdDelJob(j){if(SD.jobs[j].tasks.some(function(t){return (t.people||[]).length;})&&!confirm("Remove the "+(SD.jobs[j].name||"job")+" job and everyone scheduled on it?"))return;SD.jobs.splice(j,1);renderSchedEditor();}
@@ -1732,8 +1738,8 @@ function renderSchedEditor(){
       var open=Math.max(0,(+t.needed||0)-(t.people||[]).length);
       return '<div class="sd-task">'+
         '<input class="inp sd-tn" id="sd-tn-'+ji+'-'+ti+'" value="'+hEsc(t.name)+'" placeholder="Task (e.g. Prep casserole)" onchange="sdSet('+ji+','+ti+',\'name\',this.value)">'+
-        '<input class="inp sd-tt" type="time"'+(t.anyTime?' disabled':'')+' value="'+hEsc(t.start)+'" onchange="sdSet('+ji+','+ti+',\'start\',this.value,1)" aria-label="Start">'+
-        '<input class="inp sd-tt" type="time"'+(t.anyTime?' disabled':'')+' value="'+hEsc(t.end)+'" onchange="sdSet('+ji+','+ti+',\'end\',this.value,1)" aria-label="End">'+
+        '<input class="inp sd-tt" type="time"'+(t.anyTime?' disabled':'')+' value="'+hEsc(t.start)+'" id="sd-ts-'+ji+'-'+ti+'" onchange="sdSetT('+ji+','+ti+',\'start\',this.value)" onblur="sdBlurT()" aria-label="Start">'+
+        '<input class="inp sd-tt" type="time"'+(t.anyTime?' disabled':'')+' value="'+hEsc(t.end)+'" id="sd-te-'+ji+'-'+ti+'" onchange="sdSetT('+ji+','+ti+',\'end\',this.value)" onblur="sdBlurT()" aria-label="End">'+
         '<label class="sd-need">Need<input class="inp" type="number" min="0" value="'+(+t.needed||0)+'" onchange="sdSet('+ji+','+ti+',\'needed\',parseInt(this.value)||0,1)"></label>'+
         '<button class="sd-x" onclick="sdDelTask('+ji+','+ti+')" aria-label="Remove task">×</button>'+sdDayRow(ji,ti,t)+
         '<div class="sd-people">'+chips+(open?'<span class="pchip openc">'+open+' open</span>':'')+
@@ -1747,8 +1753,8 @@ function renderSchedEditor(){
   }).join("");
   document.getElementById("sched-inner").innerHTML=
     '<div class="modal-header"><div><div class="modal-eyebrow">'+hEsc(e.name)+' · '+fD(e.date)+'</div><h2 class="modal-title">Schedule</h2></div><button class="xbtn" onclick="closeSchedEditor()" aria-label="Close">✕</button></div>'+
-    '<div class="sd-top"><div><label class="lbl">Event starts</label><input class="inp" type="time" value="'+hEsc(SD.startTime)+'" onchange="SD.startTime=this.value;renderSchedEditor()"></div>'+
-      '<div><label class="lbl">Event ends</label><input class="inp" type="time" value="'+hEsc(SD.endTime)+'" onchange="SD.endTime=this.value;renderSchedEditor()"></div>'+
+    '<div class="sd-top"><div><label class="lbl">Event starts</label><input class="inp" type="time" id="sd-es" value="'+hEsc(SD.startTime)+'" onchange="SD.startTime=this.value;SD_TDIRTY=1" onblur="sdBlurT()"></div>'+
+      '<div><label class="lbl">Event ends</label><input class="inp" type="time" id="sd-ee" value="'+hEsc(SD.endTime)+'" onchange="SD.endTime=this.value;SD_TDIRTY=1" onblur="sdBlurT()"></div>'+
       '<div style="grid-column:span 2"><label class="lbl">Templates</label><div class="fr" style="flex-wrap:nowrap"><select class="inp" onchange="applyTemplate(this.value)">'+tOpts+'</select><button class="btn btn-sm" style="white-space:nowrap" onclick="saveAsTemplate()"'+(SD.jobs.length?'':' disabled style="opacity:.4"')+'>Save as template</button></div></div></div>'+
     '<div class="sd-hint">Prep and setup tasks can start before the event, be on another day (Days before / Days after), or be “Anytime of day”. People marked ⚠ are booked on another task at the same time.</div>'+
     jobsHtml+
@@ -1819,8 +1825,8 @@ function renderTplEditor(){
     var tasks=j.tasks.map(function(t,ti){
       return '<div class="sd-task">'+
         '<input class="inp sd-tn" id="sd-tn-'+ji+'-'+ti+'" value="'+hEsc(t.name)+'" placeholder="Task (e.g. Prep casserole)" onchange="sdSet('+ji+','+ti+',\'name\',this.value)">'+
-        '<input class="inp sd-tt" type="time"'+(t.anyTime?' disabled':'')+' value="'+hEsc(t.start)+'" onchange="sdSet('+ji+','+ti+',\'start\',this.value,1)" aria-label="Start">'+
-        '<input class="inp sd-tt" type="time"'+(t.anyTime?' disabled':'')+' value="'+hEsc(t.end)+'" onchange="sdSet('+ji+','+ti+',\'end\',this.value,1)" aria-label="End">'+
+        '<input class="inp sd-tt" type="time"'+(t.anyTime?' disabled':'')+' value="'+hEsc(t.start)+'" id="sd-ts-'+ji+'-'+ti+'" onchange="sdSetT('+ji+','+ti+',\'start\',this.value)" onblur="sdBlurT()" aria-label="Start">'+
+        '<input class="inp sd-tt" type="time"'+(t.anyTime?' disabled':'')+' value="'+hEsc(t.end)+'" id="sd-te-'+ji+'-'+ti+'" onchange="sdSetT('+ji+','+ti+',\'end\',this.value)" onblur="sdBlurT()" aria-label="End">'+
         '<label class="sd-need">Need<input class="inp" type="number" min="0" value="'+(+t.needed||0)+'" onchange="sdSet('+ji+','+ti+',\'needed\',parseInt(this.value)||0,1)"></label>'+
         '<button class="sd-x" onclick="sdDelTask('+ji+','+ti+')" aria-label="Remove task">×</button>'+sdDayRow(ji,ti,t)+
       '</div>';}).join("");
@@ -1833,8 +1839,8 @@ function renderTplEditor(){
   document.getElementById("sched-inner").innerHTML=
     '<div class="modal-header"><div><div class="modal-eyebrow">Schedule template</div><h2 class="modal-title">'+(SD.tplId?'Edit template':SD.jobs.length&&SD.name?'Copy of template':'New template')+'</h2></div><button class="xbtn" onclick="closeSchedEditor()" aria-label="Close">✕</button></div>'+
     '<div class="sd-top"><div style="grid-column:1/-1"><label class="lbl" for="tpl-name">Template name</label><input class="inp" id="tpl-name" value="'+hEsc(SD.name)+'" placeholder="e.g. Dinner schedule" oninput="SD.name=this.value;var x=document.getElementById(\'tpl-err\');if(x)x.style.display=\'none\'"></div>'+
-      '<div><label class="lbl">Event starts</label><input class="inp" type="time" value="'+hEsc(SD.startTime)+'" onchange="SD.startTime=this.value;renderTplEditor()"></div>'+
-      '<div><label class="lbl">Event ends</label><input class="inp" type="time" value="'+hEsc(SD.endTime)+'" onchange="SD.endTime=this.value;renderTplEditor()"></div></div>'+
+      '<div><label class="lbl">Event starts</label><input class="inp" type="time" value="'+hEsc(SD.startTime)+'" onchange="SD.startTime=this.value"></div>'+
+      '<div><label class="lbl">Event ends</label><input class="inp" type="time" value="'+hEsc(SD.endTime)+'" onchange="SD.endTime=this.value"></div></div>'+
     '<div class="sd-hint">Set the event’s usual start time, then give each task its times. When you use this template on an event, every task moves with that event’s start (a task 1 hour before here stays 1 hour before). Tasks set to days before or after keep the clock time you enter, and “Anytime of day” tasks have no set time. People are picked on each event.</div>'+
     jobsHtml+
     '<div class="sd-add"><span class="card-s">Add a job:</span>'+JOB_PRESETS.map(function(p){return '<button class="btn btn-sm" onclick="sdAddJob(\''+p+'\')">'+p+'</button>';}).join("")+'<button class="btn btn-sm" onclick="sdAddJob(\'\')">+ Other</button></div>'+
